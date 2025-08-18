@@ -185,7 +185,7 @@
   "crons": [
     {
       "path": "/api/webhooks/cron/maintenance",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/webhooks/cron/aggregate-stats",
@@ -209,23 +209,23 @@
     },
     {
       "path": "/api/webhooks/cron/process-analysis-queue",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/webhooks/cron/cache-warming",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/webhooks/cron/health-check",
-      "schedule": "*/1 * * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/webhooks/cron/process-dlq",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/webhooks/cron/monitoring-dashboard",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 11 * * *"
     },
     {
       "path": "/api/webhooks/cron/dlq-maintenance",
@@ -233,7 +233,7 @@
     },
     {
       "path": "/api/webhooks/cron/cache-cleanup",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
