@@ -246,48 +246,48 @@ jobs:
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
 
-  notify-deployment:
-    name: Notify Deployment
-    runs-on: ubuntu-latest
-    needs: [deploy-to-vercel, database-migration, performance-monitoring]
-    if: always()
-    steps:
-      - name: Deployment Status Notification
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const deployResult = '${{ needs.deploy-to-vercel.result }}';
-            const dbResult = '${{ needs.database-migration.result }}';
-            const perfResult = '${{ needs.performance-monitoring.result }}';
-            
-            let status = '🚀 Production Deployment';
-            let color = deployResult === 'success' ? 'success' : 'failure';
-            
-            let message = `## ${status}\n\n`;
-            message += `**Deployment**: ${deployResult === 'success' ? '✅' : '❌'} ${deployResult}\n`;
-            message += `**Database Migration**: ${dbResult === 'success' ? '✅' : dbResult === 'skipped' ? '⏭️' : '❌'} ${dbResult}\n`;
-            message += `**Performance Check**: ${perfResult === 'success' ? '✅' : perfResult === 'skipped' ? '⏭️' : '❌'} ${perfResult}\n`;
-            
-            if (deployResult === 'success') {
-              message += `\n🌐 **Live URL**: ${{ needs.deploy-to-vercel.outputs.preview-url }}\n`;
-            }
-            
-            message += `\n📊 **Commit**: ${context.sha.substring(0, 7)}\n`;
-            message += `👤 **Author**: ${context.actor}\n`;
-            message += `⏰ **Time**: ${new Date().toISOString()}\n`;
-            
-            message += '\n---\n*Automated Production Deployment*';
-            
-            // Create deployment issue comment if there are failures
-            if (deployResult !== 'success' || dbResult === 'failure') {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `🚨 Production Deployment Issue - ${new Date().toISOString().split('T')[0]}`,
-                body: message,
-                labels: ['deployment', 'production', 'urgent']
-              });
-            }
+  # notify-deployment:
+  #   name: Notify Deployment
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-to-vercel, database-migration, performance-monitoring]
+  #   if: always()
+  #   steps:
+  #     - name: Deployment Status Notification
+  #       uses: actions/github-script@v6
+  #       with:
+  #         script: |
+  #           const deployResult = '${{ needs.deploy-to-vercel.result }}';
+  #           const dbResult = '${{ needs.database-migration.result }}';
+  #           const perfResult = '${{ needs.performance-monitoring.result }}';
+  #           
+  #           let status = '🚀 Production Deployment';
+  #           let color = deployResult === 'success' ? 'success' : 'failure';
+  #           
+  #           let message = `## ${status}\n\n`;
+  #           message += `**Deployment**: ${deployResult === 'success' ? '✅' : '❌'} ${deployResult}\n`;
+  #           message += `**Database Migration**: ${dbResult === 'success' ? '✅' : dbResult === 'skipped' ? '⏭️' : '❌'} ${dbResult}\n`;
+  #           message += `**Performance Check**: ${perfResult === 'success' ? '✅' : perfResult === 'skipped' ? '⏭️' : '❌'} ${perfResult}\n`;
+  #           
+  #           if (deployResult === 'success') {
+  #             message += `\n🌐 **Live URL**: ${{ needs.deploy-to-vercel.outputs.preview-url }}\n`;
+  #           }
+  #           
+  #           message += `\n📊 **Commit**: ${context.sha.substring(0, 7)}\n`;
+  #           message += `👤 **Author**: ${context.actor}\n`;
+  #           message += `⏰ **Time**: ${new Date().toISOString()}\n`;
+  #           
+  #           message += '\n---\n*Automated Production Deployment*';
+  #           
+  #           // Create deployment issue comment if there are failures
+  #           if (deployResult !== 'success' || dbResult === 'failure') {
+  #             await github.rest.issues.create({
+  #               owner: context.repo.owner,
+  #               repo: context.repo.repo,
+  #               title: `🚨 Production Deployment Issue - ${new Date().toISOString().split('T')[0]}`,
+  #               body: message,
+  #               labels: ['deployment', 'production', 'urgent']
+  #             });
+  #           }
 
   rollback-on-failure:
     name: Rollback on Failure
