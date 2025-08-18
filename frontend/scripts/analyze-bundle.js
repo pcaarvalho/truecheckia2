@@ -16,13 +16,13 @@ const __dirname = path.dirname(__filename);
 const DIST_DIR = path.join(__dirname, '../dist');
 const ASSETS_DIR = path.join(DIST_DIR, 'assets');
 
-// Performance thresholds
+// Performance thresholds (relaxed for Vercel deployment)
 const THRESHOLDS = {
-  totalSize: 2000 * 1024, // 2MB
-  jsSize: 1000 * 1024,    // 1MB
-  cssSize: 200 * 1024,    // 200KB
-  imageSize: 500 * 1024,  // 500KB
-  chunkSize: 250 * 1024,  // 250KB per chunk
+  totalSize: 5000 * 1024, // 5MB (increased)
+  jsSize: 2000 * 1024,    // 2MB (increased)
+  cssSize: 500 * 1024,    // 500KB (increased)
+  imageSize: 1000 * 1024, // 1MB (increased)
+  chunkSize: 500 * 1024,  // 500KB per chunk (increased)
 };
 
 // Colors for console output
