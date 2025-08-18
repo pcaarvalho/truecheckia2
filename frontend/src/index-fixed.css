@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* TrueCheckIA Design System - Modern SaaS Dark Theme */
+
+@layer base {
+  :root {
+    /* Core Colors - Dark Theme with proper visibility */
+    --background: 0 0% 100%; /* White for light mode */
+    --foreground: 222.2 84% 4.9%;
+    
+    /* Dark mode colors */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Brand Colors - Purple to Blue Gradient */
+    --primary: 263 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 215 84% 60%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Muted & Accent */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Status Colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    
+    /* UI Elements */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 263 70% 50.4%;
+    
+    --radius: 0.5rem;
+  }
+  
+  .dark {
+    /* Dark mode overrides */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 5% 6%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 263 70% 50.4%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 215 84% 60%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 5% 14%;
+    --muted-foreground: 240 5% 64.9%;
+    
+    --accent: 240 5% 14%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 5% 17%;
+    --input: 240 5% 17%;
+    --ring: 263 70% 50.4%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Apply dark mode by default */
+  html {
+    @apply dark;
+  }
+}
+
+/* Glass morphism effects */
+.glass {
+  @apply backdrop-blur-md bg-white/5 border border-white/10;
+}
+
+.glass-heavy {
+  @apply backdrop-blur-xl bg-white/10 border border-white/20;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+/* Gradient backgrounds */
+.gradient-purple {
+  @apply bg-gradient-to-r from-purple-600 to-purple-800;
+}
+
+.gradient-blue {
+  @apply bg-gradient-to-r from-blue-600 to-blue-800;
+}
+
+.gradient-purple-blue {
+  @apply bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600;
+}
+
+/* Glow effects */
+.glow-purple {
+  box-shadow: 0 0 50px rgba(147, 51, 234, 0.5);
+}
+
+.glow-blue {
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.5);
+}
+
+/* Smooth animations */
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-gradient {
+    animation: gradient 8s ease infinite;
+    background-size: 200% 200%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-purple-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-purple-500;
+}

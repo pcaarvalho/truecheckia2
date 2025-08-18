@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Primary Meta Tags -->
+    <title>TrueCheckIA - AI Content Detector | 95% Accuracy</title>
+    <meta name="description" content="Detect AI-generated content with 95% accuracy. Advanced AI detection technology trusted by 10,000+ professionals. Try free - no credit card required." />
+    <meta name="author" content="TrueCheckIA" />
+    <meta name="keywords" content="AI detection, content authenticity, AI text detector, plagiarism detection, artificial intelligence, content verification, ChatGPT detector, GPT detector" />
+    <link rel="canonical" href="https://truecheckia.com" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="TrueCheckIA - AI Content Detector | 95% Accuracy" />
+    <meta property="og:description" content="Detect AI-generated content with 95% accuracy. Advanced AI detection technology trusted by 10,000+ professionals worldwide." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://truecheckia.com" />
+    <meta property="og:image" content="https://truecheckia.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="TrueCheckIA" />
+    <meta property="og:locale" content="pt_BR" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@truecheckia" />
+    <meta name="twitter:creator" content="@truecheckia" />
+    <meta name="twitter:title" content="TrueCheckIA - AI Content Detector" />
+    <meta name="twitter:description" content="Detect AI-generated content with 95% accuracy. Try free - no credit card required." />
+    <meta name="twitter:image" content="https://truecheckia.com/twitter-image.jpg" />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    
+    <!-- PWA and Mobile Meta Tags -->
+    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="msapplication-TileColor" content="#8B5CF6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TrueCheckIA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="TrueCheckIA" />
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#8B5CF6" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="//api.truecheckia.com" />
+    
+    <!-- Performance and Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TrueCheckIA",
+      "description": "Detect AI-generated content with 95% accuracy using advanced machine learning algorithms.",
+      "url": "https://truecheckia.com",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free plan with premium options available"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+      }
+    }
+    </script>
+    
+    <!-- Performance optimizations -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="modulepreload" href="/src/main.tsx" />
+  </head>
+
+  <body>
+    <!-- Accessibility and SEO improvements -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; background: #f3f4f6;">
+        <h1>TrueCheckIA - AI Content Detector</h1>
+        <p>Este aplicativo requer JavaScript para funcionar. Por favor, habilite o JavaScript em seu navegador.</p>
+        <p>This application requires JavaScript to work. Please enable JavaScript in your browser.</p>
+      </div>
+    </noscript>
+    
+    <!-- Skip to content link for accessibility -->
+    <a href="#root" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-purple-600 text-white px-4 py-2 rounded-md z-50">
+      Pular para o conteúdo principal
+    </a>
+    
+    <!-- Main app container -->
+    <div id="root"></div>
+    
+    <!-- Service Worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    
+    <!-- Main application script -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

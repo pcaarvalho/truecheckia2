@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de API</title>
+</head>
+<body>
+    <h1>Teste de Comunicação com API</h1>
+    <button id="testBtn">Testar API</button>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Teste 1: Health check
+                console.log('Testando health endpoint...');
+                const healthRes = await fetch('http://localhost:4000/health');
+                const healthData = await healthRes.json();
+                console.log('Health:', healthData);
+                
+                // Teste 2: Login
+                console.log('Testando login endpoint...');
+                const loginRes = await fetch('http://localhost:4000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const loginData = await loginRes.json();
+                console.log('Login response:', loginData);
+                
+                resultDiv.innerHTML = `
+                    <pre>Health: ${JSON.stringify(healthData, null, 2)}</pre>
+                    <pre>Login: ${JSON.stringify(loginData, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Erro:', error);
+                resultDiv.innerHTML = `<pre>Erro: ${error.message}</pre>`;
+            }
+        });
+    </script>
+</body>
+</html>
