@@ -3,7 +3,7 @@
 <div align="center">
   
   <p align="center">
-    <strong>🚀 Plataforma SaaS de detecção de conteúdo gerado por IA com 95% de precisão</strong>
+    <strong>🚀 Plataforma SaaS de detecção de conteúdo gerado por IA com 95% de precisão</strong> 
   </p>
   
   <p align="center">
