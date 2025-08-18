@@ -74,8 +74,8 @@ export const config = {
     apiKey: process.env.OPENAI_API_KEY!,
     orgId: process.env.OPENAI_ORG_ID,
     models: {
-      primary: 'gpt-4-turbo-preview',
-      secondary: 'gpt-3.5-turbo',
+      primary: 'gpt-4o',
+      secondary: 'gpt-4o-mini',
       embedding: 'text-embedding-3-small',
     },
   },

@@ -7,79 +7,83 @@ const openai = new OpenAI({
   organization: config.openai.orgId,
 })
 
-const DETECTION_PROMPT_PT = `You are a specialized detector for identifying AI-generated texts.
-Analyze the provided text considering:
+const DETECTION_PROMPT_PT = `You are an advanced AI text detector specializing in identifying content from GPT-4, Claude, Gemini, and other LLMs.
 
-1. STRUCTURE AND FLOW:
-- Pattern repetitions
-- Predictable transitions
-- Overly uniform structure
-- Similar paragraph lengths
+ANALYZE WITH MULTIPLE LAYERS:
 
-2. VOCABULARY AND STYLE:
-- Excessive use of formal words
-- Lack of authentic colloquialisms
-- Absence of natural errors or typos
-- Excessively consistent vocabulary
+1. MODEL-SPECIFIC PATTERNS:
+- GPT-4: Tendency for "However," transitions, nested parentheticals, "It's worth noting"
+- Claude: Apologetic tone, excessive caveats, "I should mention", ethical considerations
+- Gemini: Balanced viewpoints, "On one hand/other hand", comprehensive lists
+- Generic LLM: Perfect grammar, no typos, uniform sentence complexity
 
-3. CONTENT AND DEPTH:
-- Generalities without specific experiences
-- Superficial knowledge
-- Lack of controversial or personal opinions
-- Excessive caution and neutrality
+2. LINGUISTIC FORENSICS:
+- Perplexity analysis: Unusually low perplexity scores
+- Burstiness: Lack of variation in sentence length (humans vary 30-50%)
+- Token predictability: High next-token predictability
+- Semantic coherence: Unnatural consistency in topic progression
 
-4. AI MARKERS:
-- Phrases like "It's important to note that...", "It's worth mentioning..."
-- Excessive and well-structured lists
-- Generic and obvious conclusions
-- Overuse of connectives
+3. HUMAN AUTHENTICITY MARKERS (absence indicates AI):
+- Personal anecdotes with specific details (dates, names, places)
+- Emotional inconsistencies or contradictions
+- Cultural references and colloquialisms specific to region/age
+- Typos, grammatical quirks, or stylistic inconsistencies
+- Strong opinions without hedging
+- Natural digressions and tangential thoughts
 
-Return ONLY valid JSON in the following format:
+4. STATISTICAL ANOMALIES:
+- Sentence length variance (standard deviation < 4 words = suspicious)
+- Punctuation patterns (AI uses 40% more commas on average)
+- Paragraph length consistency (CV < 0.3 = likely AI)
+
+Return ONLY valid JSON:
 {
   "score": 0-100,
   "confidence": "high" | "medium" | "low",
-  "main_indicators": ["indicator1", "indicator2"],
-  "explanation": "detailed explanation",
+  "main_indicators": ["specific_indicator1", "specific_indicator2"],
+  "explanation": "detailed technical explanation in Portuguese",
   "suspicious_parts": [
-    {"text": "suspicious excerpt", "reason": "reason", "score": 0-100}
+    {"text": "suspicious excerpt", "reason": "specific reason", "score": 0-100}
   ]
 }`
 
-const DETECTION_PROMPT_EN = `You are a specialized detector for identifying AI-generated texts.
-Analyze the provided text considering:
+const DETECTION_PROMPT_EN = `You are an advanced AI text detector specializing in identifying content from GPT-4, Claude, Gemini, and other LLMs.
 
-1. STRUCTURE AND FLOW:
-- Pattern repetitions
-- Predictable transitions
-- Overly uniform structure
-- Similar paragraph lengths
+ANALYZE WITH MULTIPLE LAYERS:
 
-2. VOCABULARY AND STYLE:
-- Excessive use of formal words
-- Lack of authentic colloquialisms
-- Absence of natural errors or typos
-- Excessively consistent vocabulary
+1. MODEL-SPECIFIC PATTERNS:
+- GPT-4: Tendency for "However," transitions, nested parentheticals, "It's worth noting"
+- Claude: Apologetic tone, excessive caveats, "I should mention", ethical considerations
+- Gemini: Balanced viewpoints, "On one hand/other hand", comprehensive lists
+- Generic LLM: Perfect grammar, no typos, uniform sentence complexity
 
-3. CONTENT AND DEPTH:
-- Generalities without specific experiences
-- Superficial knowledge
-- Lack of controversial or personal opinions
-- Excessive caution and neutrality
+2. LINGUISTIC FORENSICS:
+- Perplexity analysis: Unusually low perplexity scores
+- Burstiness: Lack of variation in sentence length (humans vary 30-50%)
+- Token predictability: High next-token predictability
+- Semantic coherence: Unnatural consistency in topic progression
 
-4. AI MARKERS:
-- Phrases like "It's important to note that...", "It's worth mentioning..."
-- Excessive and well-structured lists
-- Generic and obvious conclusions
-- Overuse of connectives
+3. HUMAN AUTHENTICITY MARKERS (absence indicates AI):
+- Personal anecdotes with specific details (dates, names, places)
+- Emotional inconsistencies or contradictions
+- Cultural references and colloquialisms specific to region/age
+- Typos, grammatical quirks, or stylistic inconsistencies
+- Strong opinions without hedging
+- Natural digressions and tangential thoughts
 
-Return ONLY valid JSON in the following format:
+4. STATISTICAL ANOMALIES:
+- Sentence length variance (standard deviation < 4 words = suspicious)
+- Punctuation patterns (AI uses 40% more commas on average)
+- Paragraph length consistency (CV < 0.3 = likely AI)
+
+Return ONLY valid JSON:
 {
   "score": 0-100,
   "confidence": "high" | "medium" | "low",
-  "main_indicators": ["indicator1", "indicator2"],
-  "explanation": "detailed explanation",
+  "main_indicators": ["specific_indicator1", "specific_indicator2"],
+  "explanation": "detailed technical explanation",
   "suspicious_parts": [
-    {"text": "suspicious excerpt", "reason": "reason", "score": 0-100}
+    {"text": "suspicious excerpt", "reason": "specific reason", "score": 0-100}
   ]
 }`
 
@@ -87,61 +91,85 @@ export async function analyzeWithOpenAI(
   text: string,
   language: string = 'pt'
 ): Promise<AnalysisResult> {
+  const prompt = language === 'pt' ? DETECTION_PROMPT_PT : DETECTION_PROMPT_EN
+  
+  let primaryAnalysis: OpenAIAnalysisResponse | null = null
+  let secondaryAnalysis: OpenAIAnalysisResponse | null = null
+  
+  // Try primary analysis (GPT-4o)
   try {
-    const prompt = language === 'pt' ? DETECTION_PROMPT_PT : DETECTION_PROMPT_EN
-
-    // Primary analysis with GPT-4
-    const primaryAnalysis = await performAnalysis(
+    primaryAnalysis = await performAnalysis(
       text,
       prompt,
       config.openai.models.primary
     )
+  } catch (error) {
+    console.error('Primary analysis failed:', error)
+  }
 
-    // Secondary verification with GPT-3.5 for cross-validation
-    const secondaryAnalysis = await performAnalysis(
+  // Try secondary analysis (GPT-4o-mini)  
+  try {
+    secondaryAnalysis = await performAnalysis(
       text,
       prompt,
       config.openai.models.secondary
     )
+  } catch (error) {
+    console.error('Secondary analysis failed:', error)
+  }
 
-    // Combine and weight the results
-    const finalScore = weightedAverage(
+  // If both failed, throw error
+  if (!primaryAnalysis && !secondaryAnalysis) {
+    throw new Error('Both AI analysis models failed. Please check your OpenAI API configuration.')
+  }
+
+  // Use available analysis or combine if both succeeded
+  let finalScore: number
+  let confidence: 'HIGH' | 'MEDIUM' | 'LOW'
+  let explanation: string
+  let indicators: string[]
+
+  if (primaryAnalysis && secondaryAnalysis) {
+    // Both succeeded - combine results
+    finalScore = weightedAverage(
       primaryAnalysis.score,
       secondaryAnalysis.score,
-      0.7, // 70% weight for GPT-4
-      0.3  // 30% weight for GPT-3.5
+      0.7, // 70% weight for GPT-4o
+      0.3  // 30% weight for GPT-4o-mini
     )
-
-    // Determine confidence based on agreement
+    
     const scoreDifference = Math.abs(primaryAnalysis.score - secondaryAnalysis.score)
-    const confidence = determineConfidence(scoreDifference, finalScore)
+    confidence = determineConfidence(scoreDifference, finalScore)
+    explanation = primaryAnalysis.explanation
+    indicators = primaryAnalysis.main_indicators
+  } else {
+    // Only one succeeded - use single result
+    const analysis = primaryAnalysis || secondaryAnalysis!
+    finalScore = analysis.score
+    confidence = 'MEDIUM' // Lower confidence when only one model used
+    explanation = `${analysis.explanation} (Note: Analysis performed with single model due to API limitations)`
+    indicators = analysis.main_indicators
+  }
 
-    // Process indicators
-    const indicators = processIndicators(
-      primaryAnalysis.main_indicators,
-      language
-    )
+  // Process indicators
+  const processedIndicators = processIndicators(indicators, language)
 
-    // Process suspicious parts
-    const suspiciousParts = processSuspiciousParts(
-      primaryAnalysis.suspicious_parts
-    )
+  // Process suspicious parts
+  const suspiciousParts = processSuspiciousParts(
+    (primaryAnalysis || secondaryAnalysis!).suspicious_parts
+  )
 
-    return {
-      id: '', // Will be set by controller
-      aiScore: Math.round(finalScore),
-      confidence,
-      isAiGenerated: finalScore > 70,
-      indicators,
-      explanation: primaryAnalysis.explanation,
-      suspiciousParts,
-      processingTime: 0, // Will be set by controller
-      wordCount: text.split(/\s+/).length,
-      charCount: text.length,
-    }
-  } catch (error) {
-    console.error('OpenAI analysis error:', error)
-    throw new Error('Failed to analyze text')
+  return {
+    id: '', // Will be set by controller
+    aiScore: Math.round(finalScore),
+    confidence,
+    isAiGenerated: finalScore > 65, // Mais sensível após prompts melhorados
+    indicators: processedIndicators,
+    explanation,
+    suspiciousParts,
+    processingTime: 0, // Will be set by controller
+    wordCount: text.split(/\s+/).length,
+    charCount: text.length,
   }
 }
 
@@ -176,14 +204,8 @@ async function performAnalysis(
     return JSON.parse(content) as OpenAIAnalysisResponse
   } catch (error) {
     console.error(`Analysis error with ${model}:`, error)
-    // Return a default response on error
-    return {
-      score: 50,
-      confidence: 'low',
-      main_indicators: ['analysis_error'],
-      explanation: 'Unable to complete analysis',
-      suspicious_parts: [],
-    }
+    // Throw error to let controller handle it properly
+    throw error
   }
 }
 
@@ -251,6 +273,61 @@ function processIndicators(
       description: language === 'pt'
         ? 'Excessively uniform structure'
         : 'Excessively uniform structure',
+      severity: 'medium',
+    },
+    // NOVOS INDICADORES AVANÇADOS
+    'gpt4_pattern': {
+      description: language === 'pt' 
+        ? 'Padrões específicos do GPT-4 detectados' 
+        : 'GPT-4 specific patterns detected',
+      severity: 'high',
+    },
+    'claude_pattern': {
+      description: language === 'pt'
+        ? 'Padrões do Claude identificados'
+        : 'Claude patterns identified',
+      severity: 'high',
+    },
+    'gemini_pattern': {
+      description: language === 'pt'
+        ? 'Padrões do Gemini detectados'
+        : 'Gemini patterns detected',
+      severity: 'high',
+    },
+    'low_burstiness': {
+      description: language === 'pt'
+        ? 'Baixa variação no comprimento das frases'
+        : 'Low sentence length variation',
+      severity: 'high',
+    },
+    'missing_human_markers': {
+      description: language === 'pt'
+        ? 'Ausência de marcadores humanos naturais'
+        : 'Missing natural human markers',
+      severity: 'medium',
+    },
+    'excessive_commas': {
+      description: language === 'pt'
+        ? 'Uso excessivo de vírgulas'
+        : 'Excessive comma usage',
+      severity: 'medium',
+    },
+    'perfect_grammar': {
+      description: language === 'pt'
+        ? 'Gramática perfeita sem erros naturais'
+        : 'Perfect grammar without natural errors',
+      severity: 'medium',
+    },
+    'high_perplexity': {
+      description: language === 'pt'
+        ? 'Alta previsibilidade do texto'
+        : 'High text predictability',
+      severity: 'high',
+    },
+    'unnatural_coherence': {
+      description: language === 'pt'
+        ? 'Coerência temática não natural'
+        : 'Unnatural thematic coherence',
       severity: 'medium',
     },
   }

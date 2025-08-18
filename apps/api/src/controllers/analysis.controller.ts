@@ -100,10 +100,20 @@ class AnalysisController {
 
     // Perform analysis
     const startTime = Date.now()
-    const result = await analyzeWithOpenAI(text, language)
+    let result: AnalysisResult
+    try {
+      result = await analyzeWithOpenAI(text, language)
+    } catch (error) {
+      console.error('Analysis failed:', error)
+      throw new AppError(
+        'AI analysis service is temporarily unavailable. Please try again later.',
+        503,
+        ERROR_CODES.SERVICE_UNAVAILABLE
+      )
+    }
     const processingTime = Date.now() - startTime
 
-    // Deduct credit
+    // Deduct credit only after successful analysis
     if (user.plan === 'FREE') {
       await prisma.user.update({
         where: { id: userId },
@@ -122,9 +132,9 @@ class AnalysisController {
         aiScore: result.aiScore,
         confidence: result.confidence,
         isAiGenerated: result.isAiGenerated,
-        indicators: result.indicators,
+        indicators: result.indicators as any,
         explanation: result.explanation,
-        suspiciousParts: result.suspiciousParts,
+        suspiciousParts: result.suspiciousParts as any,
         processingTime,
         cached: false,
       },
