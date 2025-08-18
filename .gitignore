@@ -1,0 +1,182 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Next.js
+.next/
+out/
+build
+dist
+
+# Production
+build
+dist
+*.log
+
+# Environment Variables & Secrets
+.env
+.env.production
+.env.*
+!.env.example
+!.env.production.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.backup
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+config/secrets/
+
+# API Keys & Tokens
+api-keys.json
+tokens.json
+*.secrets
+.secrets
+stripe-webhook.txt
+webhook-secret.txt
+
+# Temporary Documentation & Development Files
+*.md
+!README.md
+!CLAUDE.md
+!docs/**/*.md
+fluxo.md
+new.md
+frontend-test-status.md
+SERVERLESS_*.md
+MIGRATION*.md
+STRIPE_*.md
+TAREFA-*.md
+VERCEL*.md
+DEV_USER_SETUP.md
+INFRASTRUCTURE-FIXES.md
+INTEGRATION.md
+RELATORIO_DEPLOY.md
+QUICKSTART.md
+FINAL_DEPLOYMENT_READINESS.md
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data
+redis_data
+
+# Uploads
+uploads
+tmp
+
+# Logs & Debug Files
+logs
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+backend.log
+frontend.log
+error.log
+access.log
+combined.log
+debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+cypress/videos
+cypress/screenshots
+playwright-report
+test-results
+
+# Test Files & Scripts
+test-*.js
+test-*.ts
+test-auth.js
+test-stripe-integration.js
+temp-test.*
+*.test.local.*
+
+# Cache & Temporary Files
+.cache
+.tmp
+.temp
+temp/
+tmp/
+.turbo
+*.tmp
+*.temp
+
+# Platform & Deployment
+.vercel
+.netlify
+.railway
+.render
+
+# Runtime & Process Files
+.pid
+*.pid
+.sock
+
+# Backup Files
+*.backup
+*.bak
+*.old
+
+# Docker
+docker-data/
+*.dockerfile.bak
+
+# Queue & Job Files
+queue-data/
+jobs/
+*.queue
+
+# Error Reports
+error-reports/
+crash-reports/
+*.crash
+
+# Performance & Monitoring
+*.perf
+monitoring/
+metrics/
+
+# Security Scan Results
+security-scan.*
+vuln-report.*
+*.sarif

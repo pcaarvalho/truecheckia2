@@ -1,0 +1,260 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "apps/api/src/**/*",
+          "packages/**/*",
+          "node_modules/**/*"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/auth/register",
+      "dest": "/api/auth/register.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/login",
+      "dest": "/api/auth/login.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/verify-email",
+      "dest": "/api/auth/verify-email.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/refresh",
+      "dest": "/api/auth/refresh.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/logout",
+      "dest": "/api/auth/logout.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/forgot-password",
+      "dest": "/api/auth/forgot-password.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/reset-password",
+      "dest": "/api/auth/reset-password.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/resend-verification",
+      "dest": "/api/auth/resend-verification.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/change-password",
+      "dest": "/api/auth/change-password.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/auth/logout-all",
+      "dest": "/api/auth/logout-all.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/analysis/check",
+      "dest": "/api/analysis/check.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/analysis/history",
+      "dest": "/api/analysis/history.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/analysis/stats",
+      "dest": "/api/analysis/stats.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/analysis/([^/]+)",
+      "dest": "/api/analysis/[id].ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/user/profile",
+      "dest": "/api/user/profile.ts",
+      "methods": ["GET", "PATCH", "OPTIONS"]
+    },
+    {
+      "src": "/api/user/credits",
+      "dest": "/api/user/credits.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/user/api-key",
+      "dest": "/api/user/api-key.ts",
+      "methods": ["POST", "DELETE", "OPTIONS"]
+    },
+    {
+      "src": "/api/v1/analyze",
+      "dest": "/api/v1/analyze.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/v1/status",
+      "dest": "/api/v1/status.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/v1/usage",
+      "dest": "/api/v1/usage.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/subscription/checkout",
+      "dest": "/api/subscription/checkout.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/subscription/portal",
+      "dest": "/api/subscription/portal.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/subscription/status",
+      "dest": "/api/subscription/status.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/subscription/webhook",
+      "dest": "/api/subscription/webhook.ts",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/admin/(.*)",
+      "dest": "/api/admin/[...all].ts",
+      "methods": ["GET", "POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/webhooks/(.*)",
+      "dest": "/api/webhooks/[...all].ts",
+      "methods": ["GET", "POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.ts",
+      "methods": ["GET", "OPTIONS"]
+    }
+  ],
+  "functions": {
+    "api/auth/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 10,
+      "memory": 256,
+      "regions": ["iad1"]
+    },
+    "api/analysis/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 512,
+      "regions": ["iad1"]
+    },
+    "api/v1/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 512,
+      "regions": ["iad1"]
+    },
+    "api/subscription/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 15,
+      "memory": 256,
+      "regions": ["iad1"]
+    },
+    "api/user/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 10,
+      "memory": 256,
+      "regions": ["iad1"]
+    },
+    "api/webhooks/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 512,
+      "regions": ["iad1"]
+    },
+    "api/admin/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 15,
+      "memory": 256,
+      "regions": ["iad1"]
+    },
+    "api/health.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 5,
+      "memory": 128,
+      "regions": ["iad1", "sfo1", "fra1"]
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "crons": [
+    {
+      "path": "/api/webhooks/cron/maintenance",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/aggregate-stats",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/clean-notifications",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/reset-credits",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/process-renewals",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/check-low-credits",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/process-analysis-queue",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/cache-warming",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/health-check",
+      "schedule": "*/1 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/process-dlq",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/monitoring-dashboard",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/dlq-maintenance",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/cache-cleanup",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

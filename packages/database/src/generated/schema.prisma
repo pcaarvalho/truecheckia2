@@ -1,0 +1,285 @@
+generator client {
+  provider        = "prisma-client-js"
+  engineType      = "library"
+  binaryTargets   = ["native", "rhel-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  previewFeatures = ["driverAdapters", "relationJoins", "postgresqlExtensions"]
+  output          = "../src/generated"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  extensions        = [pg_stat_statements(map: "pg_stat_statements")]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String?
+  googleId       String?  @unique
+  name           String?
+  avatar         String?
+  plan           Plan     @default(FREE)
+  credits        Int      @default(10)
+  creditsResetAt DateTime @default(now())
+  apiKey         String?  @unique @default(cuid())
+  role           Role     @default(USER)
+  emailVerified  Boolean  @default(false)
+
+  // Email verification fields
+  emailVerificationToken   String?   @unique
+  emailVerificationExpires DateTime?
+
+  // Password reset fields
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
+  analyses      Analysis[]
+  subscription  Subscription?
+  apiUsage      ApiUsage[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([googleId])
+  @@index([apiKey])
+  @@index([emailVerificationToken])
+  @@index([passwordResetToken])
+  @@index([plan, credits, createdAt]) // Composite for plan queries with date filtering
+  @@index([emailVerified, plan]) // For verified users by plan
+  @@index([creditsResetAt]) // For credit reset jobs
+  @@index([role, createdAt]) // Admin queries
+  @@index([updatedAt]) // For sync operations
+}
+
+model Analysis {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  text      String @db.Text
+  wordCount Int
+  charCount Int
+  language  String @default("pt")
+
+  aiScore       Float // 0-100 percentage
+  confidence    Confidence
+  isAiGenerated Boolean
+
+  indicators      Json // Array of detected patterns
+  explanation     String @db.Text
+  suspiciousParts Json // Array of text segments with scores
+
+  modelUsed      String  @default("gpt-4")
+  processingTime Int // milliseconds
+  cached         Boolean @default(false)
+
+  metadata Json? // Additional data
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)]) // Primary user history query
+  @@index([userId, isAiGenerated, createdAt(sort: Desc)]) // Filtered history
+  @@index([aiScore, confidence]) // Score-based queries
+  @@index([language, createdAt(sort: Desc)]) // Language analytics
+  @@index([cached, createdAt]) // Cache management
+  @@index([modelUsed, createdAt]) // Model performance tracking
+  @@index([wordCount]) // Analytics queries
+  @@index([processingTime, createdAt]) // Performance monitoring
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId String  @unique
+  stripeSubId      String? @unique
+  stripePriceId    String?
+
+  plan   Plan
+  status SubStatus @default(TRIALING)
+
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubId])
+  @@index([status, currentPeriodEnd]) // For subscription management
+  @@index([plan, status]) // Plan analytics
+  @@index([cancelAtPeriodEnd, currentPeriodEnd]) // Cancellation processing
+}
+
+model ApiUsage {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint     String
+  method       String
+  statusCode   Int
+  responseTime Int // milliseconds
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)]) // User API usage history
+  @@index([endpoint, createdAt(sort: Desc)]) // Endpoint analytics
+  @@index([statusCode, createdAt]) // Error monitoring
+  @@index([createdAt(sort: Desc)]) // General analytics
+  @@index([userId, endpoint, createdAt(sort: Desc)]) // Detailed user tracking
+  @@index([responseTime, createdAt]) // Performance monitoring
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotifType
+  title   String
+  message String    @db.Text
+
+  read   Boolean   @default(false)
+  readAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt(sort: Desc)]) // User notification feed
+  @@index([userId, type, read]) // Filtered notifications
+  @@index([type, createdAt(sort: Desc)]) // Admin monitoring
+  @@index([read, createdAt]) // Mark as read operations
+}
+
+model CachedAnalysis {
+  id       String @id @default(cuid())
+  textHash String @unique
+
+  result    Json
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([textHash]) // Primary lookup
+  @@index([expiresAt]) // Cleanup operations
+  @@index([createdAt]) // Analytics
+}
+
+// New models for production monitoring and performance
+
+model QueryPerformance {
+  id            String @id @default(cuid())
+  queryType     String // Type of query (user_lookup, analysis_history, etc.)
+  executionTime Int // milliseconds
+  recordCount   Int // number of records processed
+  indexesUsed   Json? // which indexes were used
+
+  createdAt DateTime @default(now())
+
+  @@index([queryType, createdAt(sort: Desc)])
+  @@index([executionTime, createdAt])
+}
+
+model SystemHealth {
+  id           String       @id @default(cuid())
+  service      String // database, api, cache, etc.
+  status       HealthStatus
+  responseTime Int? // milliseconds
+  errorRate    Float? // percentage
+  throughput   Int? // requests per second
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([service, status, createdAt(sort: Desc)])
+  @@index([service, createdAt(sort: Desc)])
+}
+
+model DatabaseMetrics {
+  id                 String @id @default(cuid())
+  connectionPoolSize Int
+  activeConnections  Int
+  idleConnections    Int
+  queriesPerSecond   Float
+  averageQueryTime   Float
+  slowQueries        Int // queries > 1000ms
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}
+
+// Partitioned table for high-volume analytics data
+model AnalyticsEvent {
+  id        String  @id @default(cuid())
+  eventType String // page_view, analysis_request, subscription_change, etc.
+  userId    String?
+  sessionId String?
+
+  properties Json // flexible event properties
+
+  createdAt DateTime @default(now())
+  date      DateTime @default(now()) @db.Date // For partitioning
+
+  @@index([eventType, date])
+  @@index([userId, eventType, date])
+  @@index([sessionId, date])
+  @@index([date, eventType]) // Optimized for time-series queries
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Confidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAST_DUE
+  UNPAID
+  PAUSED
+}
+
+enum NotifType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  CREDIT_LOW
+  SUBSCRIPTION
+  ANALYSIS
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+  MAINTENANCE
+}

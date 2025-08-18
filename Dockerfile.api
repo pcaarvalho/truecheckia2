@@ -1,0 +1,61 @@
+# Build stage
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY packages/database/package*.json ./packages/database/
+COPY packages/types/package*.json ./packages/types/
+COPY packages/config/package*.json ./packages/config/
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN cd packages/database && npx prisma generate
+
+# Build the application
+RUN npm run build:api
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Copy package files
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY packages/database/package*.json ./packages/database/
+COPY packages/types/package*.json ./packages/types/
+COPY packages/config/package*.json ./packages/config/
+
+# Install production dependencies only
+RUN npm ci --production
+
+# Copy built application and Prisma client
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Change ownership to nodejs user
+RUN chown -R nodejs:nodejs /app
+
+USER nodejs
+
+EXPOSE 4000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "apps/api/dist/server.js"]

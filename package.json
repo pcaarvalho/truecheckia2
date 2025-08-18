@@ -1,0 +1,73 @@
+{
+  "name": "truecheckia",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose up -d && npm run dev:all",
+    "dev:all": "npm-run-all --parallel dev:api dev:web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "setup:neon": "npm run db:push && npm run db:seed:neon",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build:all",
+    "build:all": "npm-run-all build:api build:web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "db:migrate": "npm run db:migrate --workspace=packages/database",
+    "db:generate": "npm run db:generate --workspace=packages/database",
+    "db:push": "npm run db:push --workspace=packages/database",
+    "db:studio": "npm run db:studio --workspace=packages/database",
+    "db:seed": "npm run db:seed --workspace=packages/database",
+    "db:seed:neon": "cd packages/database && DATABASE_URL=\"$(grep '^DATABASE_URL=' ../../.env | cut -d'=' -f2- | tr -d '\"')\" DIRECT_URL=\"$(grep '^DIRECT_URL=' ../../.env | cut -d'=' -f2- | tr -d '\"')\" npx tsx src/seed.ts",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "setup:upstash": "chmod +x scripts/setup-upstash.sh && scripts/setup-upstash.sh",
+    "test:upstash": "tsx scripts/test-upstash-connectivity.ts",
+    "test:redis:migration": "tsx scripts/test-redis-migration.ts",
+    "test:queues": "tsx apps/api/src/scripts/test-serverless.ts",
+    "migrate:redis": "tsx scripts/migrate-redis-data.ts",
+    "migrate:redis:live": "tsx scripts/migrate-redis-data.ts --live",
+    "benchmark:redis": "tsx scripts/benchmark-redis-performance.ts",
+    "benchmark:upstash": "tsx scripts/test-upstash-connectivity.ts",
+    "diagnose:redis": "tsx scripts/diagnose-redis-setup.ts",
+    "validate:redis": "tsx scripts/validate-redis-setup.ts",
+    "test:neon": "tsx scripts/test-neon-connectivity.ts",
+    "test:db:reliability": "tsx scripts/test-db-reliability.ts",
+    "test:infrastructure:fixes": "tsx scripts/test-infrastructure-fixes.ts",
+    "setup:neon": "echo 'Neon setup guide: docs/neon-setup.md'",
+    "validate:infrastructure": "npm run test:neon && npm run test:upstash && npm run test:infrastructure:fixes",
+    "validate:neon": "tsx scripts/validate-neon-setup.ts",
+    "validate:serverless": "tsx scripts/validate-serverless-readiness.ts",
+    "fix:serverless": "tsx scripts/fix-serverless-issues.ts",
+    "deploy:prepare": "npm run validate:serverless && npm run build",
+    "optimize:bundle": "tsx scripts/optimize-bundle-size.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0",
+    "@types/jsonwebtoken": "^9.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.35.3",
+    "@vercel/node": "^5.3.13",
+    "@prisma/client": "^5.7.1",
+    "zod": "^3.22.4",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

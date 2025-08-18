@@ -1,0 +1,326 @@
+name: Production Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '18'
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      config: ${{ steps.changes.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ "${{ github.event.inputs.force_deploy }}" == "true" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "config=true" >> $GITHUB_OUTPUT
+            echo "Force deploy requested"
+            exit 0
+          fi
+          
+          # Check for changes in the last commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          HAS_CHANGES="false"
+          FRONTEND_CHANGES="false"
+          BACKEND_CHANGES="false"
+          CONFIG_CHANGES="false"
+          
+          for file in $CHANGED_FILES; do
+            if [[ $file == frontend/* ]] || [[ $file == packages/* ]]; then
+              FRONTEND_CHANGES="true"
+              HAS_CHANGES="true"
+            elif [[ $file == api/* ]] || [[ $file == apps/api/* ]]; then
+              BACKEND_CHANGES="true"
+              HAS_CHANGES="true"
+            elif [[ $file == vercel.json ]] || [[ $file == package*.json ]] || [[ $file == .env* ]]; then
+              CONFIG_CHANGES="true"
+              HAS_CHANGES="true"
+            fi
+          done
+          
+          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+          echo "frontend=$FRONTEND_CHANGES" >> $GITHUB_OUTPUT
+          echo "backend=$BACKEND_CHANGES" >> $GITHUB_OUTPUT
+          echo "config=$CONFIG_CHANGES" >> $GITHUB_OUTPUT
+
+  pre-deploy-validation:
+    name: Pre-Deploy Validation
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.has_changes == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      - name: Run pre-deploy checks
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          UPSTASH_REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}
+        run: |
+          chmod +x scripts/pre-deploy-check.sh
+          ./scripts/pre-deploy-check.sh
+
+      - name: Build and validate
+        run: |
+          cd frontend && npm run build
+          npm run validate:serverless
+
+      - name: Archive production build
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-build-${{ github.sha }}
+          path: |
+            frontend/dist
+            api
+          retention-days: 7
+
+  deploy-to-vercel:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [changes, pre-deploy-validation]
+    if: needs.changes.outputs.has_changes == 'true'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.preview-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      - name: Build Project
+        run: |
+          cd frontend && npm run build
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview-url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOYMENT_URL"
+
+      - name: Post-deploy verification
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.preview-url }}
+        run: |
+          chmod +x scripts/post-deploy-verify.sh
+          ./scripts/post-deploy-verify.sh $DEPLOYMENT_URL
+
+  database-migration:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [changes, deploy-to-vercel]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.config == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          npm run db:migrate
+          npm run db:generate
+
+      - name: Verify database health
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          npm run test:neon
+
+  performance-monitoring:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-to-vercel]
+    if: always() && needs.deploy-to-vercel.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse CI
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          DEPLOYMENT_URL: ${{ needs.deploy-to-vercel.outputs.preview-url }}
+        run: lhci autorun --config=.lighthouserc.js
+
+  security-scan-production:
+    name: Production Security Scan
+    runs-on: ubuntu-latest
+    needs: [deploy-to-vercel]
+    if: always() && needs.deploy-to-vercel.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run OWASP ZAP security scan
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: ${{ needs.deploy-to-vercel.outputs.preview-url }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+  notify-deployment:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-to-vercel, database-migration, performance-monitoring]
+    if: always()
+    steps:
+      - name: Deployment Status Notification
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployResult = '${{ needs.deploy-to-vercel.result }}';
+            const dbResult = '${{ needs.database-migration.result }}';
+            const perfResult = '${{ needs.performance-monitoring.result }}';
+            
+            let status = '🚀 Production Deployment';
+            let color = deployResult === 'success' ? 'success' : 'failure';
+            
+            let message = `## ${status}\n\n`;
+            message += `**Deployment**: ${deployResult === 'success' ? '✅' : '❌'} ${deployResult}\n`;
+            message += `**Database Migration**: ${dbResult === 'success' ? '✅' : dbResult === 'skipped' ? '⏭️' : '❌'} ${dbResult}\n`;
+            message += `**Performance Check**: ${perfResult === 'success' ? '✅' : perfResult === 'skipped' ? '⏭️' : '❌'} ${perfResult}\n`;
+            
+            if (deployResult === 'success') {
+              message += `\n🌐 **Live URL**: ${{ needs.deploy-to-vercel.outputs.preview-url }}\n`;
+            }
+            
+            message += `\n📊 **Commit**: ${context.sha.substring(0, 7)}\n`;
+            message += `👤 **Author**: ${context.actor}\n`;
+            message += `⏰ **Time**: ${new Date().toISOString()}\n`;
+            
+            message += '\n---\n*Automated Production Deployment*';
+            
+            // Create deployment issue comment if there are failures
+            if (deployResult !== 'success' || dbResult === 'failure') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Production Deployment Issue - ${new Date().toISOString().split('T')[0]}`,
+                body: message,
+                labels: ['deployment', 'production', 'urgent']
+              });
+            }
+
+  rollback-on-failure:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy-to-vercel, database-migration]
+    if: failure() && (needs.deploy-to-vercel.result == 'failure' || needs.database-migration.result == 'failure')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Rollback deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          chmod +x scripts/rollback-deploy.sh
+          ./scripts/rollback-deploy.sh
+
+      - name: Notify rollback
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Production Rollback Initiated - ${new Date().toISOString().split('T')[0]}`,
+              body: `## 🔄 Automatic Rollback\n\nProduction deployment failed and has been automatically rolled back.\n\n**Commit**: ${context.sha.substring(0, 7)}\n**Time**: ${new Date().toISOString()}\n\nPlease review the failed deployment logs and fix issues before redeploying.\n\n---\n*Automated Rollback System*`,
+              labels: ['deployment', 'rollback', 'urgent']
+            });
