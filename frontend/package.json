@@ -15,11 +15,10 @@
     "preview": "vite preview",
     "serve": "vite preview --port 4173",
     "clean": "rm -rf dist node_modules/.vite",
-    "analyze": "node scripts/analyze-bundle.js",
+    "analyze": "echo 'Bundle analysis skipped'",
     "lighthouse": "lhci autorun",
     "perf:audit": "npm run build && npm run analyze && npm run lighthouse",
-    "precommit": "npm run lint && npm run type-check",
-    "postbuild": "npm run analyze"
+    "precommit": "npm run lint && npm run type-check"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
