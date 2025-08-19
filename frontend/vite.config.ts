@@ -3,15 +3,30 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 // import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
-import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, command }) => {
+export default defineConfig(async ({ mode, command }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
   
   const isProduction = mode === 'production';
   const isDevelopment = mode === 'development';
+  
+  // Try to import visualizer only if not in Vercel production
+  let visualizerPlugin = null;
+  if (isProduction && command === 'build' && !process.env.VERCEL) {
+    try {
+      const { visualizer } = await import('rollup-plugin-visualizer');
+      visualizerPlugin = visualizer({
+        filename: 'dist/stats.html',
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      });
+    } catch (e) {
+      // Visualizer not available, skip
+    }
+  }
 
   return {
     server: {
@@ -82,13 +97,8 @@ export default defineConfig(({ mode, command }) => {
         }
       }),
       
-      // Bundle analyzer for production builds
-      isProduction && command === 'build' && visualizer({
-        filename: 'dist/stats.html',
-        open: false,
-        gzipSize: true,
-        brotliSize: true,
-      }),
+      // Bundle analyzer for production builds (if available)
+      visualizerPlugin,
     ].filter(Boolean),
     
     resolve: {
