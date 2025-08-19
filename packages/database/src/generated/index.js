@@ -321,7 +321,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/pedro/truecheckia2/packages/database/src/generated",
+      "value": "/Users/pedro/Projetos/Producao/truecheckia2/packages/database/src/generated",
       "fromEnvVar": null
     },
     "config": {
@@ -347,11 +347,12 @@ const config = {
       "postgresqlExtensions",
       "relationJoins"
     ],
-    "sourceFilePath": "/Users/pedro/truecheckia2/packages/database/prisma/schema.prisma",
+    "sourceFilePath": "/Users/pedro/Projetos/Producao/truecheckia2/packages/database/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../prisma",
   "clientVersion": "5.22.0",
@@ -379,8 +380,8 @@ const fs = require('fs')
 config.dirname = __dirname
 if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
   const alternativePaths = [
-    "src/generated",
-    "generated",
+    "packages/database/src/generated",
+    "database/src/generated",
   ]
   
   const alternativePath = alternativePaths.find((altPath) => {
@@ -409,15 +410,15 @@ Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
-path.join(process.cwd(), "src/generated/libquery_engine-darwin-arm64.dylib.node")
+path.join(process.cwd(), "packages/database/src/generated/libquery_engine-darwin-arm64.dylib.node")
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-rhel-openssl-3.0.x.so.node");
-path.join(process.cwd(), "src/generated/libquery_engine-rhel-openssl-3.0.x.so.node")
+path.join(process.cwd(), "packages/database/src/generated/libquery_engine-rhel-openssl-3.0.x.so.node")
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-linux-musl-openssl-3.0.x.so.node");
-path.join(process.cwd(), "src/generated/libquery_engine-linux-musl-openssl-3.0.x.so.node")
+path.join(process.cwd(), "packages/database/src/generated/libquery_engine-linux-musl-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "src/generated/schema.prisma")
+path.join(process.cwd(), "packages/database/src/generated/schema.prisma")

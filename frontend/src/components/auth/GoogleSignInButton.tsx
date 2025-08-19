@@ -42,8 +42,7 @@ export function GoogleSignInButton({
     if (disabled) return
     
     // Redirect to backend Google OAuth endpoint
-    const apiUrl = env.apiBaseUrl.replace('/api', '') // Remove /api suffix for OAuth routes
-    window.location.href = `${apiUrl}/auth/google`
+    window.location.href = `${env.apiBaseUrl}/auth/google`
   }
 
   return (

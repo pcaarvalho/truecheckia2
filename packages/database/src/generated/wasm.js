@@ -320,7 +320,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/pedro/truecheckia2/packages/database/src/generated",
+      "value": "/Users/pedro/Projetos/Producao/truecheckia2/packages/database/src/generated",
       "fromEnvVar": null
     },
     "config": {
@@ -346,11 +346,12 @@ const config = {
       "postgresqlExtensions",
       "relationJoins"
     ],
-    "sourceFilePath": "/Users/pedro/truecheckia2/packages/database/prisma/schema.prisma",
+    "sourceFilePath": "/Users/pedro/Projetos/Producao/truecheckia2/packages/database/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../prisma",
   "clientVersion": "5.22.0",
