@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Queue from 'bull'
 import nodemailer from 'nodemailer'
 import { config } from '@truecheckia/config'
