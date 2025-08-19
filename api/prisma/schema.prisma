@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  previewFeatures = ["driverAdapters", "relationJoins", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  extensions = [pg_stat_statements(map: "pg_stat_statements")]
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  password       String?
+  googleId       String?        @unique
+  name           String?
+  avatar         String?
+  plan           Plan           @default(FREE)
+  credits        Int            @default(10)
+  creditsResetAt DateTime       @default(now())
+  apiKey         String?        @unique @default(cuid())
+  role           Role           @default(USER)
+  emailVerified  Boolean        @default(false)
+  
+  // Email verification fields
+  emailVerificationToken    String?   @unique
+  emailVerificationExpires  DateTime?
+  
+  // Password reset fields
+  passwordResetToken        String?   @unique
+  passwordResetExpires      DateTime?
+  
+  analyses       Analysis[]
+  subscription   Subscription?
+  apiUsage       ApiUsage[]
+  notifications  Notification[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  @@index([email])
+  @@index([googleId])
+  @@index([apiKey]) 
+  @@index([emailVerificationToken])
+  @@index([passwordResetToken])
+  @@index([plan, credits, createdAt])
+  @@index([emailVerified, plan])
+  @@index([creditsResetAt])
+  @@index([role, createdAt])
+  @@index([updatedAt])
+}
+
+model Analysis {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  text            String         @db.Text
+  wordCount       Int
+  charCount       Int
+  language        String         @default("pt")
+  
+  aiScore         Float
+  confidence      Confidence
+  isAiGenerated   Boolean
+  
+  indicators      Json
+  explanation     String         @db.Text
+  suspiciousParts Json
+  
+  modelUsed       String         @default("gpt-4")
+  processingTime  Int
+  cached          Boolean        @default(false)
+  
+  metadata        Json?
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isAiGenerated, createdAt(sort: Desc)])
+  @@index([aiScore, confidence])
+  @@index([language, createdAt(sort: Desc)])
+  @@index([cached, createdAt])
+  @@index([modelUsed, createdAt])
+  @@index([wordCount])
+  @@index([processingTime, createdAt])
+}
+
+model Subscription {
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  stripeCustomerId  String         @unique
+  stripeSubId       String?        @unique
+  stripePriceId     String?
+  
+  plan              Plan
+  status            SubStatus      @default(TRIALING)
+  
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean        @default(false)
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@index([stripeCustomerId])
+  @@index([stripeSubId])
+  @@index([status, currentPeriodEnd])
+  @@index([plan, status])
+  @@index([cancelAtPeriodEnd, currentPeriodEnd])
+}
+
+model ApiUsage {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  endpoint        String
+  method          String
+  statusCode      Int
+  responseTime    Int
+  
+  ipAddress       String?
+  userAgent       String?
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([endpoint, createdAt(sort: Desc)])
+  @@index([statusCode, createdAt])
+  @@index([createdAt(sort: Desc)])
+  @@index([userId, endpoint, createdAt(sort: Desc)])
+  @@index([responseTime, createdAt])
+}
+
+model Notification {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type            NotifType
+  title           String
+  message         String         @db.Text
+  
+  read            Boolean        @default(false)
+  readAt          DateTime?
+  
+  metadata        Json?
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([userId, read, createdAt(sort: Desc)])
+  @@index([userId, type, read])
+  @@index([type, createdAt(sort: Desc)])
+  @@index([read, createdAt])
+}
+
+model CachedAnalysis {
+  id              String         @id @default(cuid())
+  textHash        String         @unique
+  
+  result          Json
+  expiresAt       DateTime
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([textHash])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model QueryPerformance {
+  id              String         @id @default(cuid())
+  queryType       String
+  executionTime   Int
+  recordCount     Int
+  indexesUsed     Json?
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([queryType, createdAt(sort: Desc)])
+  @@index([executionTime, createdAt])
+}
+
+model SystemHealth {
+  id                String         @id @default(cuid())
+  service           String
+  status            HealthStatus
+  responseTime      Int?
+  errorRate         Float?
+  throughput        Int?
+  
+  metadata          Json?
+  
+  createdAt         DateTime       @default(now())
+  
+  @@index([service, status, createdAt(sort: Desc)])
+  @@index([service, createdAt(sort: Desc)])
+}
+
+model DatabaseMetrics {
+  id                    String         @id @default(cuid())
+  connectionPoolSize    Int
+  activeConnections     Int
+  idleConnections       Int
+  queriesPerSecond      Float
+  averageQueryTime      Float
+  slowQueries           Int
+  
+  createdAt             DateTime       @default(now())
+  
+  @@index([createdAt(sort: Desc)])
+}
+
+model AnalyticsEvent {
+  id              String         @id @default(cuid())
+  eventType       String
+  userId          String?        
+  sessionId       String?
+  
+  properties      Json
+  
+  createdAt       DateTime       @default(now())
+  date            DateTime       @default(now()) @db.Date
+  
+  @@index([eventType, date])
+  @@index([userId, eventType, date])
+  @@index([sessionId, date])
+  @@index([date, eventType])
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Confidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAST_DUE
+  UNPAID
+  PAUSED
+}
+
+enum NotifType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  CREDIT_LOW
+  SUBSCRIPTION
+  ANALYSIS
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+  MAINTENANCE
+}
