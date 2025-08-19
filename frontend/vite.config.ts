@@ -12,19 +12,25 @@ export default defineConfig(async ({ mode, command }) => {
   const isProduction = mode === 'production';
   const isDevelopment = mode === 'development';
   
-  // Try to import visualizer only if not in Vercel production
+  // Bundle analyzer plugin (only for local analysis builds)
   let visualizerPlugin = null;
-  if (isProduction && command === 'build' && !process.env.VERCEL) {
+  const isVercelBuild = process.env.VERCEL || process.env.CI;
+  
+  if (isProduction && command === 'build' && !isVercelBuild) {
     try {
+      // Check if visualizer is available before importing
       const { visualizer } = await import('rollup-plugin-visualizer');
       visualizerPlugin = visualizer({
         filename: 'dist/stats.html',
         open: false,
         gzipSize: true,
         brotliSize: true,
+        template: 'treemap', // More useful visualization
       });
-    } catch (e) {
-      // Visualizer not available, skip
+      console.log('✅ Bundle analyzer enabled');
+    } catch (error) {
+      console.warn('⚠️  rollup-plugin-visualizer not available, skipping bundle analysis');
+      // Gracefully continue without the plugin
     }
   }
 
@@ -43,10 +49,13 @@ export default defineConfig(async ({ mode, command }) => {
       // Development only plugins
       // isDevelopment && componentTagger(),
       
-      // PWA Plugin for production
-      isProduction && VitePWA({
+      // PWA Plugin (only for production builds, not for Vercel preview)
+      isProduction && !isVercelBuild && VitePWA({
         registerType: 'prompt',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        devOptions: {
+          enabled: false // Disable PWA in development
+        },
         manifest: {
           name: 'TrueCheckIA - AI Content Detector',
           short_name: 'TrueCheckIA',
@@ -78,6 +87,8 @@ export default defineConfig(async ({ mode, command }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          // Prevent conflicts with Vercel's routing
+          navigateFallback: null,
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\./,
@@ -85,12 +96,13 @@ export default defineConfig(async ({ mode, command }) => {
               options: {
                 cacheName: 'api-cache',
                 expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 300 // 5 minutes
+                  maxEntries: 50, // Reduced for better performance
+                  maxAgeSeconds: 180 // 3 minutes - shorter for API freshness
                 },
                 cacheableResponse: {
                   statuses: [0, 200]
-                }
+                },
+                networkTimeoutSeconds: 10 // Prevent hanging requests
               }
             }
           ]
@@ -168,17 +180,8 @@ export default defineConfig(async ({ mode, command }) => {
       // CSS code splitting
       cssCodeSplit: true,
       
-      // Terser options for better compression
-      terserOptions: isProduction ? {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info'],
-        },
-        mangle: {
-          safari10: true,
-        },
-      } : undefined,
+      // Use esbuild for better performance, configure drop options
+      drop: isProduction ? ['console', 'debugger'] : [],
     },
     
     // Performance optimizations

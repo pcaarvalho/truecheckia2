@@ -136,7 +136,7 @@ Additional Information:
         return fallback
       }
 
-      const isDevelopment = process.env.NODE_ENV === 'development'
+      const isDevelopment = import.meta.env.DEV
       const canRetry = retryCount < 3
 
       return (
