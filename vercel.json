@@ -1,9 +1,14 @@
 {
-  "buildCommand": "npm run build",
+  "version": 2,
+  "name": "truecheckiagpt",
+  "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm ci",
+  "framework": null,
+  "nodejs": "20.x",
   "functions": {
     "api/**/*.ts": {
+      "runtime": "nodejs20.x",
       "maxDuration": 30
     }
   },
@@ -13,7 +18,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://www.truecheckia.com"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -21,11 +26,28 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
+          "value": "Content-Type, Authorization, X-Requested-With"
         },
         {
           "key": "Access-Control-Allow-Credentials",
           "value": "true"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
         }
       ]
     }
@@ -36,8 +58,21 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api).*)",
       "destination": "/index.html"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
