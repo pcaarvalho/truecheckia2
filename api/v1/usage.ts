@@ -1,9 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
-import { apiController } from '../../apps/api/src/controllers/api.controller'
+// Dynamic import to reduce cold start
+const getUsage = async (req: any, res: any) => {
+  const { apiController } = await import('../../apps/api/src/controllers/api.controller')
+  return apiController.getUsage(req, res)
+}
 
 const handler = createVercelHandler(
-  apiController.getUsage
+  getUsage
 )
 
 export default handler

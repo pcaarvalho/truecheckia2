@@ -1,6 +1,6 @@
 import type { VercelRequest } from '@vercel/node'
 import { verify } from 'jsonwebtoken'
-import { config } from '@truecheckia/config'
+import { config } from '../_shared/config'
 
 /**
  * Admin Authentication Utility

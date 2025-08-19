@@ -10,7 +10,8 @@ export default function TestAPI() {
 
   const testHealth = async () => {
     try {
-      const response = await fetch('http://localhost:4000/health')
+      const healthUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/../health`.replace('/api/../', '/')
+      const response = await fetch(healthUrl)
       const data = await response.json()
       setResults(prev => ({ ...prev, health: data }))
     } catch (error: any) {

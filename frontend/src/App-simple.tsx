@@ -35,7 +35,7 @@ const App = () => (
                   </a>
                   <br />
                   <a 
-                    href="http://localhost:4000/api-docs" 
+                    href={`${import.meta.env.VITE_API_BASE_URL || '/api'}/../api-docs`.replace('/api/../', '/')} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z, ZodSchema } from 'zod'
 import { AppError, ExtendedVercelRequest } from '../_utils/vercel-adapter'
-import { ERROR_CODES } from '@truecheckia/config'
+import { ERROR_CODES } from '../_shared/config'
 
 export function validateRequestMiddleware(schema: ZodSchema) {
   return (req: ExtendedVercelRequest, res: VercelResponse, next: () => void) => {

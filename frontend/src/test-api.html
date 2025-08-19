@@ -17,13 +17,13 @@
             try {
                 // Teste 1: Health check
                 console.log('Testando health endpoint...');
-                const healthRes = await fetch('http://localhost:4000/health');
+                const healthRes = await fetch('/health');
                 const healthData = await healthRes.json();
                 console.log('Health:', healthData);
                 
                 // Teste 2: Login
                 console.log('Testando login endpoint...');
-                const loginRes = await fetch('http://localhost:4000/api/auth/login', {
+                const loginRes = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

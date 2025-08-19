@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
-import { config, ERROR_CODES } from '@truecheckia/config'
+import { config, ERROR_CODES } from '../_shared/config'
 import { ExtendedVercelRequest } from '../_utils/vercel-adapter'
-import type { ApiResponse } from '@truecheckia/types'
+import type { ApiResponse } from '../_shared/types'
 import { cacheManager, cacheKey } from '../_utils/cache-manager'
 import { upstash } from '../../apps/api/src/lib/upstash'
 

@@ -2,12 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
 import { createAuthRateLimitMiddleware } from '../_middleware/rate-limit'
 import { validateRequestMiddleware } from '../_middleware/validation'
-import { loginSchema } from '@truecheckia/types'
+import { loginSchema } from '../_shared/types'
 import { cacheManager, cacheKey } from '../_utils/cache-manager'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { config } from '@truecheckia/config'
-import { prisma } from '@truecheckia/database'
+import { config } from '../_shared/config'
+import { prisma } from '../_shared/database'
 
 // Optimized login handler with caching and security enhancements
 const loginHandler = async (req: any, res: any) => {

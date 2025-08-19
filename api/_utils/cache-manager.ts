@@ -126,6 +126,13 @@ export class CacheManager {
   }
 
   /**
+   * Delete multiple cache entries by pattern
+   */
+  static async del(key: string): Promise<boolean> {
+    return await this.delete(key)
+  }
+
+  /**
    * Delete cache entry and cleanup indexes
    */
   static async delete(key: string): Promise<boolean> {
@@ -407,6 +414,67 @@ export class CacheManager {
   }
 
   /**
+   * Request deduplication to prevent multiple identical operations
+   */
+  static async deduplicate<T>(
+    key: string, 
+    operation: () => Promise<T>,
+    options: { ttl?: number } = {}
+  ): Promise<T> {
+    const { ttl = 300 } = options // 5 minutes default
+    const lockKey = `lock:${key}`
+    const resultKey = `result:${key}`
+    
+    try {
+      // Check if result already exists
+      const existingResult = await upstash.get(resultKey)
+      if (existingResult) {
+        return JSON.parse(existingResult as string)
+      }
+      
+      // Try to acquire lock
+      const lockAcquired = await upstash.set(lockKey, '1', { nx: true, ex: ttl })
+      
+      if (lockAcquired === 'OK') {
+        // We got the lock, execute the operation
+        try {
+          const result = await operation()
+          
+          // Cache the result
+          await upstash.set(resultKey, JSON.stringify(result), { ex: ttl })
+          
+          return result
+        } finally {
+          // Release the lock
+          await upstash.del(lockKey)
+        }
+      } else {
+        // Lock exists, wait for result
+        let attempts = 0
+        const maxAttempts = 30 // 15 seconds max wait
+        
+        while (attempts < maxAttempts) {
+          const result = await upstash.get(resultKey)
+          if (result) {
+            return JSON.parse(result as string)
+          }
+          
+          // Wait 500ms before next attempt
+          await new Promise(resolve => setTimeout(resolve, 500))
+          attempts++
+        }
+        
+        // Timeout waiting for result, execute operation anyway
+        return await operation()
+      }
+    } catch (error) {
+      console.error('Deduplication failed:', error)
+      // Fallback to direct operation
+      return await operation()
+    }
+  }
+
+  /**
    * Cleanup indexes for a cache key
    */
   private static async cleanupIndexes(cacheKey: string): Promise<void> {
@@ -428,6 +496,20 @@ export class CacheManager {
       console.error('Cleanup indexes failed:', error)
     }
   }
+}
+
+// Cache key generator utility
+export const cacheKey = {
+  userProfile: (userId: string) => `user:profile:${userId}`,
+  subscription: (userId: string) => `user:subscription:${userId}`,
+  analysis: (textHash: string) => `analysis:${textHash}`,
+  apiKey: (key: string) => `apikey:${key}`,
+  rateLimit: (identifier: string) => `rate_limit:${identifier}`,
+  session: (sessionId: string) => `session:${sessionId}`,
+  credits: (userId: string) => `user:credits:${userId}`,
+  stats: (userId: string, period: string) => `stats:${userId}:${period}`,
+  notification: (userId: string) => `notifications:${userId}`,
+  webhook: (type: string, id: string) => `webhook:${type}:${id}`
 }
 
 // Export singleton instance

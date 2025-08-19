@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
 import { createAuthRateLimitMiddleware } from '../_middleware/rate-limit'
 import { validateRequestMiddleware } from '../_middleware/validation'
-import { registerSchema } from '@truecheckia/types'
+import { registerSchema } from '../_shared/types'
 // Dynamic import moved to handler
 
 // Dynamic import to reduce cold start

@@ -3,7 +3,7 @@ import { createVercelHandler } from '../_utils/vercel-adapter'
 import { authenticateMiddleware } from '../_middleware/auth'
 import { createAnalysisRateLimitMiddleware } from '../_middleware/rate-limit'
 import { validateRequestMiddleware } from '../_middleware/validation'
-import { analyzeTextSchema } from '@truecheckia/types'
+import { analyzeTextSchema } from '../_shared/types'
 import { cacheManager, cacheKey } from '../_utils/cache-manager'
 import { createHash } from 'crypto'
 

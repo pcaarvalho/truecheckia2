@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
 import { createApiRateLimitMiddleware } from '../_middleware/rate-limit'
 import { validateRequestMiddleware } from '../_middleware/validation'
-import { analyzeTextSchema } from '@truecheckia/types'
+import { analyzeTextSchema } from '../_shared/types'
 
 // Dynamic import to reduce cold start
 const analyze = async (req: any, res: any) => {

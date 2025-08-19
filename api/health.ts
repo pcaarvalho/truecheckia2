@@ -1,48 +1,66 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createVercelHandler } from './_utils/vercel-adapter'
+import { VercelRequest, VercelResponse } from '@vercel/node'
+import { prisma, checkDatabaseHealth } from './_shared/database'
+import { config } from './_shared/config'
 
-const healthCheck = async (req: any, res: any) => {
-  const health = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    region: process.env.VERCEL_REGION || 'unknown',
-    services: {
-      database: 'checking...',
-      redis: 'checking...',
-      openai: 'checking...'
-    }
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
   }
 
-  // Basic service checks
   try {
-    // Check if environment variables are set
-    health.services.database = process.env.DATABASE_URL ? 'configured' : 'not_configured'
-    health.services.redis = process.env.UPSTASH_REDIS_REST_URL ? 'configured' : 'not_configured'
-    health.services.openai = process.env.OPENAI_API_KEY ? 'configured' : 'not_configured'
+    const startTime = Date.now()
+    
+    // Check database health
+    const dbHealth = await checkDatabaseHealth()
+    
+    // Check basic config
+    const hasRequiredEnv = !!(
+      config.database.url &&
+      config.openai.apiKey &&
+      config.auth.jwtSecret
+    )
 
-    // If any service is not configured, mark as degraded
-    const allConfigured = Object.values(health.services).every(status => status === 'configured')
-    health.status = allConfigured ? 'healthy' : 'degraded'
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      responseTime: `${Date.now() - startTime}ms`,
+      services: {
+        database: dbHealth.status,
+        config: hasRequiredEnv ? 'healthy' : 'missing_env',
+        api: 'healthy'
+      },
+      environment: {
+        node_env: process.env.NODE_ENV,
+        vercel: !!process.env.VERCEL,
+        region: process.env.VERCEL_REGION,
+      },
+      version: '1.0.0'
+    }
+
+    // Set overall status based on services
+    const allHealthy = Object.values(health.services).every(status => status === 'healthy')
+    health.status = allHealthy ? 'healthy' : 'degraded'
+
+    res.status(allHealthy ? 200 : 503).json(health)
 
   } catch (error) {
-    health.status = 'unhealthy'
-    health.services = {
-      database: 'error',
-      redis: 'error', 
-      openai: 'error'
-    }
+    console.error('Health check failed:', error)
+    
+    res.status(500).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: (error as Error).message,
+      services: {
+        database: 'unknown',
+        config: 'unknown',
+        api: 'unhealthy'
+      }
+    })
   }
-
-  const statusCode = health.status === 'healthy' ? 200 : 
-                     health.status === 'degraded' ? 200 : 503
-
-  res.status(statusCode).json({
-    success: health.status !== 'unhealthy',
-    data: health
-  })
 }
-
-const handler = createVercelHandler(healthCheck)
-export default handler

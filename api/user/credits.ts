@@ -1,10 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
 import { authenticateMiddleware } from '../_middleware/auth'
-import { userController } from '../../apps/api/src/controllers/user.controller'
+// Dynamic import to reduce cold start
+const getCredits = async (req: any, res: any) => {
+  const { userController } = await import('../../apps/api/src/controllers/user.controller')
+  return userController.getCredits(req, res)
+}
 
 const handler = createVercelHandler(
-  userController.getCredits,
+  getCredits,
   [
     authenticateMiddleware,
   ]

@@ -36,7 +36,7 @@ export class LazyServiceLoader {
   
   static async getPrismaService() {
     if (!this.services.has('prisma')) {
-      const { prisma } = await optimizedImport('@truecheckia/database')
+      const { prisma } = await optimizedImport('../_shared/database')
       this.services.set('prisma', prisma)
     }
     return this.services.get('prisma')
@@ -108,8 +108,8 @@ export class ModulePreloader {
   
   static async preloadCriticalModules() {
     const criticalModules = [
-      '@truecheckia/config',
-      '@truecheckia/types',
+      '../_shared/config',
+      '../_shared/types',
       '../../apps/api/src/lib/upstash'
     ]
     
@@ -205,7 +205,7 @@ export class TreeShaker {
   }
   
   static async getMinimalPrisma() {
-    const { prisma } = await optimizedImport('@truecheckia/database')
+    const { prisma } = await optimizedImport('../_shared/database')
     
     // Return only commonly used methods to reduce bundle size
     return {
@@ -247,8 +247,8 @@ export class CodeSplitter {
     const lightModules = await Promise.allSettled([
       optimizedImport('crypto'),
       optimizedImport('zod'),
-      optimizedImport('@truecheckia/config'),
-      optimizedImport('@truecheckia/types')
+      optimizedImport('../_shared/config'),
+      optimizedImport('../_shared/types')
     ])
     
     const loaded = lightModules

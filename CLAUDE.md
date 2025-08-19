@@ -26,18 +26,26 @@ npm run dev              # Start both API and frontend
 ### Frontend Development (IMPORTANT)
 ```bash
 # ALWAYS use direct navigation - workspace commands may fail
-cd frontend && npm run dev        # Vite dev server on port 5173
-cd frontend && npm run build      # Production build
-cd frontend && npm run lint:fix   # Fix linting issues
-cd frontend && npm run type-check # Type checking
+cd frontend && npm run dev          # Vite dev server on port 5173
+cd frontend && npm run build        # Production build with type checking
+cd frontend && npm run build:dev    # Development build
+cd frontend && npm run build:staging # Staging build
+cd frontend && npm run lint         # ESLint check
+cd frontend && npm run lint:fix     # Fix linting issues automatically
+cd frontend && npm run type-check   # TypeScript type checking
+cd frontend && npm run preview      # Preview production build
+cd frontend && npm run analyze      # Bundle analysis
+cd frontend && npm run clean        # Clean dist and cache
 ```
 
 ### Backend Development
 ```bash
 npm run dev:api                   # Express server on port 4000
 npm run dev:serverless            # Force serverless mode locally
-cd apps/api && npm run test      # Run backend tests
-npm run type-check                # Type check backend
+cd apps/api && npm run test       # Run backend tests (Jest)
+cd apps/api && npm run test:watch # Run tests in watch mode
+cd apps/api && npm run test:coverage # Run tests with coverage
+cd apps/api && npm run type-check # Type check backend specifically
 ```
 
 ### Database Operations
@@ -137,9 +145,12 @@ npm run test:queues              # Test serverless queue system
 ```
 
 ### Testing Approach
-- Frontend: Vite + Vitest (when configured)
-- Backend: Jest (`cd apps/api && npm run test`)
+- Frontend: No tests configured yet (Vite + Vitest ready to be set up)
+- Backend: Jest configured (`cd apps/api && npm run test`)
+  - Use `npm run test:watch` for development
+  - Use `npm run test:coverage` for coverage reports
 - **IMPORTANT**: Always check package.json before running tests
+- Test files location: `apps/api/src/__tests__/`
 
 ## Service URLs
 
@@ -164,3 +175,6 @@ Pre-configured for testing:
 3. **Docker Required**: Services must be running for full functionality
 4. **Serverless Testing**: Use `FORCE_SERVERLESS=true` to test serverless mode locally
 5. **API Structure**: Both `apps/api/` and `api/` directories share controllers/services
+6. **Node Version**: Ensure Node.js 20.x is used (specified in package.json engines)
+7. **Build Commands**: Frontend build includes TypeScript type checking automatically
+8. **Testing**: Backend has Jest configured, frontend testing not yet set up

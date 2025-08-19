@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import jwt from 'jsonwebtoken'
-import { config, ERROR_CODES } from '@truecheckia/config'
-import { prisma } from '@truecheckia/database'
+import { config, ERROR_CODES } from '../_shared/config'
+import { prisma } from '../_shared/database'
 import { AppError, ExtendedVercelRequest } from '../_utils/vercel-adapter'
-import type { JWTPayload } from '@truecheckia/types'
+import type { JWTPayload } from '../_shared/types'
 import { cacheManager, cacheKey } from '../_utils/cache-manager'
 
 export async function authenticateMiddleware(

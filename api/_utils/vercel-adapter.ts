@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
-import { config, ERROR_CODES } from '@truecheckia/config'
-import type { ApiResponse } from '@truecheckia/types'
+import { config, ERROR_CODES } from '../_shared/config'
+import type { ApiResponse } from '../_shared/types'
 import { performance } from 'perf_hooks'
 import { cacheManager } from './cache-manager'
 
@@ -90,7 +90,7 @@ class ConnectionPool {
   async warmConnections(): Promise<void> {
     try {
       // Warm database connection
-      const { prisma } = await import('@truecheckia/database')
+      const { prisma } = await import('../_shared/database')
       await prisma.$queryRaw`SELECT 1`
 
       // Warm Redis connection

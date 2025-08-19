@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createVercelHandler } from '../_utils/vercel-adapter'
-import { config } from '@truecheckia/config'
+import { config } from '../_shared/config'
 import ServerlessQueueManager from '../../apps/api/src/queues/serverless-index'
 import ServerlessAnalysisQueue from '../../apps/api/src/queues/serverless-analysis.queue'
 import ServerlessEmailQueue from '../../apps/api/src/queues/serverless-email.queue'
