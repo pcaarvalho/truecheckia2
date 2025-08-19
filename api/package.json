@@ -1,0 +1,13 @@
+{
+  "name": "truecheckia-api",
+  "version": "1.0.0",
+  "description": "TrueCheckIA Serverless API",
+  "main": "index.js",
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5"
+  }
+}
