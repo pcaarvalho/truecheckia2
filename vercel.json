@@ -1,14 +1,11 @@
 {
   "version": 2,
-  "name": "truecheckiagpt",
   "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm ci",
   "framework": null,
-  "nodejs": "20.x",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "nodejs20.x",
       "maxDuration": 30
     }
   },
@@ -60,19 +57,6 @@
     {
       "source": "/((?!api).*)",
       "destination": "/index.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }
