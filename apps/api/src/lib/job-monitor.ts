@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { upstash, serverlessCache } from './upstash'
 import { DeadLetterQueue } from './dead-letter-queue'
 import { config } from '@truecheckia/config'

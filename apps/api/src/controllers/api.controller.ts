@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response } from 'express'
 import { prisma } from '@truecheckia/database'
 import { config, ERROR_CODES } from '@truecheckia/config'

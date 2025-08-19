@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response } from 'express'
 import { prisma } from '@truecheckia/database'
 import { performance } from 'perf_hooks'

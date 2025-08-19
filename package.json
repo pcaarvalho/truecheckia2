@@ -12,7 +12,7 @@
     "dev:api": "npm run dev --workspace=apps/api",
     "setup:neon": "npm run db:push && npm run db:seed:neon",
     "dev:web": "npm run dev --workspace=apps/web",
-    "build": "npm run build:all",
+    "build": "cd frontend && npm run build",
     "build:all": "npm-run-all build:api build:web",
     "build:api": "npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",

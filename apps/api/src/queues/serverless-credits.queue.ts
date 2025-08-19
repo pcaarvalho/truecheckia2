@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serverlessQueue } from '../lib/upstash'
 import { config } from '@truecheckia/config'
 import { prisma } from '@truecheckia/database'

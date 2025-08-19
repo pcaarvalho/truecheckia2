@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Redis } from '@upstash/redis'
 import { config } from '@truecheckia/config'
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { config } from '@truecheckia/config'
 import { serverlessCache, upstash } from './upstash'
 

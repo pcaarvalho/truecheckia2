@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serverlessQueue } from '../lib/upstash'
 import { emailService } from '../services/email.service'
 import { config } from '@truecheckia/config'

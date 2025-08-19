@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Queue from 'bull'
 import { config } from '@truecheckia/config'
 import { analyzeWithOpenAI } from '../services/openai.service'

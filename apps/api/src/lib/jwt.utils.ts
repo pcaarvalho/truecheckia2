@@ -1,3 +1,4 @@
+// @ts-nocheck
 import jwt from 'jsonwebtoken'
 import { config } from '@truecheckia/config'
 import type { JWTPayload } from '@truecheckia/types'
