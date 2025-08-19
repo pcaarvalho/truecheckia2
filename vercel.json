@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "cd frontend && npm ci && npm run build",
+  "buildCommand": "cd frontend && npm ci --include=dev && npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "frontend/dist",
   "headers": [
