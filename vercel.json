@@ -3,11 +3,6 @@
   "buildCommand": "cd frontend && npm ci && npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/health.ts": {
-      "maxDuration": 10
-    }
-  },
   "headers": [
     {
       "source": "/assets/(.*)",
