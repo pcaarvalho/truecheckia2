@@ -98,10 +98,16 @@ function loadEnvironmentConfig(): EnvironmentConfig {
   // Log de configuração sempre (importante para debug em produção)
   console.log('=== TrueCheckIA Environment Configuration ===')
   console.log('Environment:', environment)
-  console.log('API Base URL:', apiBaseUrl)
-  console.log('App URL:', appUrl)
+  console.log('Raw VITE_ENV:', env.VITE_ENV)
+  console.log('Raw VITE_API_BASE_URL:', env.VITE_API_BASE_URL)
+  console.log('Raw VITE_APP_URL:', env.VITE_APP_URL)
+  console.log('Final API Base URL:', apiBaseUrl)
+  console.log('Final App URL:', appUrl)
   console.log('Version:', version)
   console.log('Build Date:', buildDate)
+  console.log('Mode:', env.MODE)
+  console.log('Prod:', env.PROD)
+  console.log('Dev:', env.DEV)
   
   if (environment === 'development') {
     console.log('Analytics:', enableAnalytics)

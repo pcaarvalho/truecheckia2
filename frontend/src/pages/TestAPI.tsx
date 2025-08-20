@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import axiosClient from '@/lib/axios'
 import api from '@/lib/api'
 import { env } from '@/config/env'
+import DebugAPI from '@/components/DebugAPI'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function TestAPI() {
   const [results, setResults] = useState<any>({})
@@ -213,8 +215,32 @@ export default function TestAPI() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">API Test Page</h1>
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">API Test & Debug Page</h1>
+        
+        {/* Debug API Component */}
+        <div className="mb-8">
+          <DebugAPI />
+        </div>
+        
+        {/* Google OAuth Test */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Google OAuth Test</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Click the button below to test Google OAuth. Check the browser console for debug logs.
+              </p>
+              <GoogleSignInButton text="Test Google OAuth" />
+              <div className="text-xs text-gray-500">
+                <p><strong>Expected URL:</strong> {env.apiBaseUrl}/auth/google</p>
+                <p><strong>Environment:</strong> {env.environment}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
         <Card className="mb-6">
           <CardHeader>
@@ -231,7 +257,7 @@ export default function TestAPI() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Results</CardTitle>
+            <CardTitle>Legacy API Test Results</CardTitle>
           </CardHeader>
           <CardContent>
             <pre className="bg-gray-100 p-4 rounded overflow-auto">
