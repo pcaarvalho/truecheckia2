@@ -94,7 +94,7 @@ class ConnectionPool {
       await prisma.$queryRaw`SELECT 1`
 
       // Warm Redis connection
-      const { upstash } = await import('../../apps/api/src/lib/upstash')
+      const { upstash } = await import('../_shared/upstash')
       await upstash.ping()
 
       console.log('✅ Connections warmed')
@@ -368,7 +368,7 @@ let redis: any = null
 // Lazy load Redis to improve cold start
 const getRedis = async () => {
   if (!redis) {
-    const { upstash } = await import('../../apps/api/src/lib/upstash')
+    const { upstash } = await import('../_shared/upstash')
     redis = upstash
   }
   return redis

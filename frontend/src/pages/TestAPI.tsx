@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import axiosClient from '@/lib/axios'
 import api from '@/lib/api'
+import { env } from '@/config/env'
 
 export default function TestAPI() {
   const [results, setResults] = useState<any>({})
@@ -10,7 +11,8 @@ export default function TestAPI() {
 
   const testHealth = async () => {
     try {
-      const healthUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/../health`.replace('/api/../', '/')
+      // Usa a configuração centralizada para construir a URL de health
+      const healthUrl = env.apiBaseUrl.replace('/api', '/health')
       const response = await fetch(healthUrl)
       const data = await response.json()
       setResults(prev => ({ ...prev, health: data }))
@@ -237,8 +239,10 @@ export default function TestAPI() {
             </pre>
             
             <div className="mt-4 text-sm text-gray-600">
-              <p>API Base URL: {import.meta.env.VITE_API_BASE_URL || 'Not set'}</p>
-              <p>Environment: {import.meta.env.VITE_ENV || 'Not set'}</p>
+              <p>API Base URL: {env.apiBaseUrl}</p>
+              <p>Environment: {env.environment}</p>
+              <p>Version: {env.version}</p>
+              <p>Build Date: {env.buildDate}</p>
             </div>
           </CardContent>
         </Card>

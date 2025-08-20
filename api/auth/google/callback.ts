@@ -1,5 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import jwt from 'jsonwebtoken'
+import * as jwt from 'jsonwebtoken'
+import { prisma } from '../_shared/database'
+import { config } from '../_shared/config'
 
 interface GoogleTokenResponse {
   access_token: string
@@ -20,6 +22,35 @@ interface GoogleUserInfo {
   picture: string
 }
 
+interface JWTPayload {
+  userId: string
+  email: string
+  role: string
+  plan: string
+}
+
+// Generate JWT tokens for a user
+function generateTokens(user: any) {
+  const payload: JWTPayload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+    plan: user.plan,
+  }
+
+  const accessToken = jwt.sign(payload, config.auth.jwtSecret, {
+    expiresIn: config.auth.jwtExpiresIn || '7d',
+  })
+
+  const refreshToken = jwt.sign(
+    { userId: user.id },
+    config.auth.refreshSecret,
+    { expiresIn: config.auth.refreshExpiresIn || '30d' }
+  )
+
+  return { accessToken, refreshToken }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' })
@@ -31,22 +62,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle OAuth errors
     if (error) {
       console.error('Google OAuth error:', error, error_description)
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+      const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
       return res.redirect(`${frontendUrl}/auth/callback?error=oauth_failed`)
     }
 
     if (!code) {
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+      const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
       return res.redirect(`${frontendUrl}/auth/callback?error=no_code`)
     }
 
-    const clientId = process.env.GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-    const callbackUrl = process.env.GOOGLE_CALLBACK_URL
+    const clientId = config.auth.google.clientId
+    const clientSecret = config.auth.google.clientSecret
+    const callbackUrl = config.auth.google.callbackUrl
 
     if (!clientId || !clientSecret || !callbackUrl) {
       console.error('Missing Google OAuth configuration')
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+      const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
       return res.redirect(`${frontendUrl}/auth/callback?error=config_missing`)
     }
 
@@ -69,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', tokenData)
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+      const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
       return res.redirect(`${frontendUrl}/auth/callback?error=token_exchange_failed`)
     }
 
@@ -84,42 +115,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!userResponse.ok) {
       console.error('User info fetch failed:', userData)
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+      const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
       return res.redirect(`${frontendUrl}/auth/callback?error=user_info_failed`)
     }
 
-    // Here you would typically:
-    // 1. Check if user exists in database
-    // 2. Create user if new
-    // 3. Generate your own JWT tokens
-    
-    // For now, create a simple JWT token
-    const jwtSecret = process.env.JWT_SECRET
-    const refreshSecret = process.env.JWT_REFRESH_SECRET
+    // Check if user exists by googleId first
+    let user = await prisma.user.findUnique({
+      where: { googleId: userData.id },
+    })
 
-    if (!jwtSecret || !refreshSecret) {
-      console.error('JWT secrets not configured')
-      const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
-      return res.redirect(`${frontendUrl}/auth/callback?error=jwt_config_missing`)
+    if (!user) {
+      // Check if user exists by email
+      const existingUser = await prisma.user.findUnique({
+        where: { email: userData.email },
+      })
+
+      if (existingUser) {
+        // User exists with this email but no Google ID
+        // Link the Google account to existing user
+        user = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { 
+            googleId: userData.id,
+            name: userData.name || existingUser.name,
+            avatar: userData.picture || existingUser.avatar,
+            emailVerified: true, // Google emails are verified
+          },
+        })
+      } else {
+        // Create new user
+        user = await prisma.user.create({
+          data: {
+            email: userData.email,
+            googleId: userData.id,
+            name: userData.name || 'Google User',
+            avatar: userData.picture,
+            emailVerified: true, // Google emails are verified
+            plan: 'FREE',
+            role: 'USER',
+            credits: config.limits.freeCredits,
+            creditsResetAt: new Date(),
+          },
+        })
+      }
+    } else {
+      // Update existing user data
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: userData.name || user.name,
+          avatar: userData.picture || user.avatar,
+          emailVerified: true,
+        },
+      })
     }
 
-    // Create user payload
-    const userPayload = {
-      userId: userData.id,
-      email: userData.email,
-      name: userData.name,
-      picture: userData.picture,
-      role: 'user',
-      plan: 'free',
-      emailVerified: userData.verified_email,
-    }
-
-    // Generate tokens
-    const accessToken = jwt.sign(userPayload, jwtSecret, { expiresIn: '7d' })
-    const refreshToken = jwt.sign({ userId: userData.id }, refreshSecret, { expiresIn: '30d' })
+    // Generate JWT tokens using the utility function
+    const { accessToken, refreshToken } = generateTokens(user)
 
     // Redirect to frontend with tokens
-    const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+    const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
     const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`
 
     console.log('OAuth success, redirecting to:', redirectUrl.replace(accessToken, '[TOKEN]').replace(refreshToken, '[REFRESH]'))
@@ -128,7 +183,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Google OAuth callback error:', error)
-    const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truecheckiagpt.vercel.app'
+    const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || config.app.url
     res.redirect(`${frontendUrl}/auth/callback?error=internal_error`)
   }
 }

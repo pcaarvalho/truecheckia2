@@ -1,4 +1,4 @@
-import { upstash, serverlessCache } from '../../apps/api/src/lib/upstash'
+import { upstash } from '../_shared/upstash'
 
 /**
  * Advanced Cache Manager for Serverless Environment

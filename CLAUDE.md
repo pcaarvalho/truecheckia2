@@ -42,6 +42,7 @@ cd frontend && npm run clean        # Clean dist and cache
 ```bash
 npm run dev:api                   # Express server on port 4000
 npm run dev:serverless            # Force serverless mode locally
+cd apps/api && npm run dev:serverless # Force serverless mode locally (alternative)
 cd apps/api && npm run test       # Run backend tests (Jest)
 cd apps/api && npm run test:watch # Run tests in watch mode
 cd apps/api && npm run test:coverage # Run tests with coverage
@@ -62,6 +63,9 @@ npm run db:seed:neon            # Seed production Neon database
 ```bash
 npm run lint                     # Lint all code
 npm run format                   # Format with Prettier
+cd frontend && npm run lint      # Frontend specific linting
+cd frontend && npm run lint:fix  # Fix frontend linting issues automatically
+cd frontend && npm run type-check # Frontend TypeScript checking
 ```
 
 ## Architecture Key Points
@@ -142,6 +146,8 @@ npm run validate:infrastructure   # Test all connections
 npm run test:neon                # Test Neon PostgreSQL
 npm run test:upstash             # Test Upstash Redis
 npm run test:queues              # Test serverless queue system
+npm run validate:serverless      # Check serverless readiness
+npm run deploy:prepare           # Pre-deployment checks
 ```
 
 ### Testing Approach
@@ -178,3 +184,5 @@ Pre-configured for testing:
 6. **Node Version**: Ensure Node.js 20.x is used (specified in package.json engines)
 7. **Build Commands**: Frontend build includes TypeScript type checking automatically
 8. **Testing**: Backend has Jest configured, frontend testing not yet set up
+9. **Package Management**: Project uses npm workspaces, always check individual package.json files
+10. **Environment**: Multiple .env templates available for different deployment scenarios

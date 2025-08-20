@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AnalysisPage } from "./pages/AnalysisPage";
+import { env } from "@/config/env";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +36,7 @@ const App = () => (
                   </a>
                   <br />
                   <a 
-                    href={`${import.meta.env.VITE_API_BASE_URL || '/api'}/../api-docs`.replace('/api/../', '/')} 
+                    href={env.apiBaseUrl.replace('/api', '/api-docs')} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

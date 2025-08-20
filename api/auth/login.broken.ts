@@ -1,8 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../_shared/database'
 import { config } from '../_shared/config'
-import { refreshTokenSchema } from '../_shared/types'
+import { loginSchema } from '../_shared/types'
+
+interface LoginInput {
+  email: string
+  password: string
+}
 
 interface JWTPayload {
   userId: string
@@ -18,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Validate input
-    const validation = refreshTokenSchema.safeParse(req.body)
+    const validation = loginSchema.safeParse(req.body)
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -30,28 +36,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    const { refreshToken } = validation.data
+    const { email, password } = validation.data as LoginInput
 
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'MISSING_REFRESH_TOKEN',
-          message: 'Refresh token is required'
-        }
-      })
-    }
-
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, config.auth.refreshSecret) as { userId: string }
-
-    // Get fresh user data
+    // Find user
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { email: email.toLowerCase() },
       select: {
         id: true,
         email: true,
         name: true,
+        password: true,
         role: true,
         plan: true,
         credits: true,
@@ -59,17 +53,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     })
 
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(401).json({
         success: false,
         error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found'
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password'
         }
       })
     }
 
-    // Generate new access token
+    // Validate password
+    const passwordValid = await bcrypt.compare(password, user.password)
+    if (!passwordValid) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password'
+        }
+      })
+    }
+
+    // Generate tokens
     const tokenPayload: JWTPayload = {
       userId: user.id,
       email: user.email,
@@ -80,6 +86,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const accessToken = jwt.sign(tokenPayload, config.auth.jwtSecret, {
       expiresIn: '1h'
     })
+
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      config.auth.refreshSecret,
+      { expiresIn: '7d' }
+    )
+
+    // Update last login (fire and forget)
+    prisma.user.update({
+      where: { id: user.id },
+      data: { updatedAt: new Date() }
+    }).catch(console.error)
 
     return res.json({
       success: true,
@@ -93,28 +111,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           credits: user.credits,
           emailVerified: user.emailVerified
         },
-        accessToken
+        accessToken,
+        refreshToken
       }
     })
 
   } catch (error) {
-    console.error('Refresh error:', error)
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'REFRESH_TOKEN_EXPIRED',
-          message: 'Refresh token has expired'
-        }
-      })
-    }
-
-    return res.status(401).json({
+    console.error('Login error:', error)
+    return res.status(500).json({
       success: false,
       error: {
-        code: 'INVALID_REFRESH_TOKEN',
-        message: 'Invalid refresh token'
+        code: 'INTERNAL_ERROR',
+        message: 'Login failed'
       }
     })
   }

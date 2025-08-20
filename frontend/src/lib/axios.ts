@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { env } from '@/config/env'
+import { debug } from '@/lib/debug'
 
 // Interface para erros da API
 export interface ApiErrorResponse {
@@ -31,7 +32,22 @@ class AxiosClient {
     // Usa a configuração centralizada de ambiente
     const baseURL = env.apiBaseUrl
     
+    // Log detalhado da inicialização
     console.log('[AxiosClient] Initializing with baseURL:', baseURL)
+    debug.environment('AxiosClient initialized', {
+      baseURL,
+      environment: env.environment,
+      isProduction: env.isProduction,
+      isDevelopment: env.isDevelopment
+    })
+    
+    // Validação adicional para produção
+    if (env.isProduction && baseURL.includes('localhost')) {
+      const error = 'CRITICAL: AxiosClient initialized with localhost URL in production!'
+      console.error('[AxiosClient]', error)
+      debug.environmentError(error, { baseURL, environment: env.environment })
+      throw new Error(error)
+    }
 
     this.instance = axios.create({
       baseURL,
@@ -55,9 +71,16 @@ class AxiosClient {
           config.headers.Authorization = `Bearer ${token}`
         }
 
-        // Log para debug em desenvolvimento
+        // Log detalhado para debug
+        const fullUrl = config.baseURL + config.url
+        debug.api(`${config.method?.toUpperCase()} ${fullUrl}`, {
+          params: config.params,
+          hasData: !!config.data,
+          hasAuth: !!config.headers?.Authorization
+        })
+        
         if (import.meta.env.DEV) {
-          console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
+          console.log(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`, {
             params: config.params,
             data: config.data,
           })
@@ -74,8 +97,14 @@ class AxiosClient {
     // Response interceptor - trata erros e refresh token
     this.instance.interceptors.response.use(
       (response) => {
+        const fullUrl = response.config.baseURL + response.config.url
+        debug.api(`Response ${response.config.method?.toUpperCase()} ${fullUrl}`, {
+          status: response.status,
+          hasSuccess: response.data && 'success' in response.data
+        })
+        
         if (import.meta.env.DEV) {
-          console.log(`[API Response Interceptor] ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+          console.log(`[API Response Interceptor] ${response.config.method?.toUpperCase()} ${fullUrl}`, {
             status: response.status,
             hasSuccess: response.data && 'success' in response.data
           })
@@ -86,9 +115,17 @@ class AxiosClient {
       async (error: AxiosError<ApiErrorResponse>) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
-        // Log de erro detalhado em desenvolvimento
+        // Log de erro detalhado
+        const fullUrl = originalRequest ? (originalRequest.baseURL + originalRequest.url) : 'unknown'
+        debug.apiError(`${originalRequest?.method?.toUpperCase()} ${fullUrl}`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        })
+        
         if (import.meta.env.DEV) {
-          console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
+          console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${fullUrl}`, {
             status: error.response?.status,
             statusText: error.response?.statusText,
             data: error.response?.data,

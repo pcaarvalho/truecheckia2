@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import App from './App'
 import './index.css'
 import { env, validateEnvironment } from '@/config/env'
+import './utils/environment-validator' // Executa validação automática
 
 // Validate environment configuration
 validateEnvironment()

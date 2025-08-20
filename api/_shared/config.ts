@@ -1,3 +1,12 @@
+// Load environment variables for Vercel serverless functions
+if (typeof window === 'undefined') {
+  try {
+    require('dotenv').config()
+  } catch (e) {
+    // dotenv não disponível, usando variáveis do processo
+  }
+}
+
 // Simplified config for Vercel serverless functions
 export const config = {
   env: process.env.NODE_ENV || 'development',

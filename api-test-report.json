@@ -1,0 +1,135 @@
+{
+  "timestamp": "2025-08-20T03:20:03.422Z",
+  "config": {
+    "baseUrl": "https://www.truecheckia.com",
+    "apiBase": "https://www.truecheckia.com/api",
+    "timeout": 15000,
+    "maxRetries": 3,
+    "testEmail": "test@example.com",
+    "testPassword": "TestPass123!",
+    "expectedCorsOrigin": "https://www.truecheckia.com"
+  },
+  "summary": {
+    "total": 19,
+    "passed": 11,
+    "failed": 4,
+    "warnings": 4,
+    "successRate": 57.9
+  },
+  "tests": [
+    {
+      "name": "Health Endpoint",
+      "status": "FAIL",
+      "details": "Request timeout",
+      "timestamp": "2025-08-20T03:19:52.293Z"
+    },
+    {
+      "name": "CORS Origin Header",
+      "status": "FAIL",
+      "details": "Expected: https://www.truecheckia.com, Got: *",
+      "timestamp": "2025-08-20T03:19:54.647Z"
+    },
+    {
+      "name": "CORS Credentials",
+      "status": "WARN",
+      "details": "Credentials not explicitly allowed",
+      "timestamp": "2025-08-20T03:19:54.647Z"
+    },
+    {
+      "name": "CORS Methods",
+      "status": "WARN",
+      "details": "Methods: GET, OPTIONS",
+      "timestamp": "2025-08-20T03:19:54.647Z"
+    },
+    {
+      "name": "Login Endpoint",
+      "status": "FAIL",
+      "details": "Unexpected status: HTTP 500",
+      "timestamp": "2025-08-20T03:19:56.108Z"
+    },
+    {
+      "name": "Register Endpoint",
+      "status": "FAIL",
+      "details": "HTTP 500",
+      "timestamp": "2025-08-20T03:19:57.472Z"
+    },
+    {
+      "name": "Google OAuth Initiation",
+      "status": "PASS",
+      "details": "HTTP 302",
+      "timestamp": "2025-08-20T03:19:58.837Z"
+    },
+    {
+      "name": "Google OAuth Redirect",
+      "status": "PASS",
+      "details": "Redirects to Google",
+      "timestamp": "2025-08-20T03:19:58.838Z"
+    },
+    {
+      "name": "Google OAuth Callback",
+      "status": "WARN",
+      "details": "Unexpected status: HTTP 307",
+      "timestamp": "2025-08-20T03:19:59.698Z"
+    },
+    {
+      "name": "Security Header: x-content-type-options",
+      "status": "PASS",
+      "details": "nosniff",
+      "timestamp": "2025-08-20T03:20:00.441Z"
+    },
+    {
+      "name": "Security Header: x-frame-options",
+      "status": "PASS",
+      "details": "DENY",
+      "timestamp": "2025-08-20T03:20:00.441Z"
+    },
+    {
+      "name": "Security Header: x-xss-protection",
+      "status": "PASS",
+      "details": "1; mode=block",
+      "timestamp": "2025-08-20T03:20:00.441Z"
+    },
+    {
+      "name": "HTTPS Header: strict-transport-security",
+      "status": "PASS",
+      "details": "max-age=63072000",
+      "timestamp": "2025-08-20T03:20:00.441Z"
+    },
+    {
+      "name": "Concurrent Requests",
+      "status": "PASS",
+      "details": "10/10 successful",
+      "timestamp": "2025-08-20T03:20:02.021Z"
+    },
+    {
+      "name": "Average Response Time",
+      "status": "PASS",
+      "details": "614.80ms",
+      "timestamp": "2025-08-20T03:20:02.021Z"
+    },
+    {
+      "name": "Max Response Time",
+      "status": "PASS",
+      "details": "1076ms",
+      "timestamp": "2025-08-20T03:20:02.021Z"
+    },
+    {
+      "name": "Min Response Time",
+      "status": "PASS",
+      "details": "251ms",
+      "timestamp": "2025-08-20T03:20:02.021Z"
+    },
+    {
+      "name": "Total Test Time",
+      "status": "PASS",
+      "details": "1079ms",
+      "timestamp": "2025-08-20T03:20:02.021Z"
+    },
+    {
+      "name": "Database Connection (Indirect)",
+      "status": "WARN",
+      "details": "Server error - possible DB connection issue",
+      "timestamp": "2025-08-20T03:20:02.920Z"
+    }
+  ]
+}

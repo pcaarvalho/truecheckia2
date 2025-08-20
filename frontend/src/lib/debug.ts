@@ -6,6 +6,7 @@ interface DebugConfig {
   auth: boolean
   registration: boolean
   general: boolean
+  environment: boolean
 }
 
 class DebugLogger {
@@ -14,6 +15,7 @@ class DebugLogger {
     auth: true,
     registration: true,
     general: true,
+    environment: true,
   }
 
   private isDev = import.meta.env.DEV
@@ -76,6 +78,18 @@ class DebugLogger {
     this.log('general', 'error', message, error)
   }
 
+  environment(message: string, data?: any) {
+    this.log('environment', 'log', message, data)
+  }
+
+  environmentError(message: string, error?: any) {
+    this.log('environment', 'error', message, error)
+  }
+
+  environmentWarn(message: string, data?: any) {
+    this.log('environment', 'warn', message, data)
+  }
+
   // Utility methods
   logResponse(category: keyof DebugConfig, response: any) {
     this.log(category, 'log', 'Response received:', {
@@ -108,6 +122,7 @@ class DebugLogger {
       auth: true,
       registration: true,
       general: true,
+      environment: true,
     }
     console.log('[DEBUG] All debug categories enabled')
   }
@@ -118,6 +133,7 @@ class DebugLogger {
       auth: false,
       registration: false,
       general: false,
+      environment: false,
     }
     console.log('[DEBUG] All debug categories disabled')
   }
