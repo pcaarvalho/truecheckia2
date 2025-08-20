@@ -22,6 +22,7 @@ vi.mock('framer-motion', () => ({
 // Mock window.location
 const mockLocation = {
   href: '',
+  origin: 'https://api.truecheckia.com',
   assign: vi.fn(),
   replace: vi.fn(),
   reload: vi.fn(),

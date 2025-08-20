@@ -41,15 +41,16 @@ export function GoogleSignInButton({
   const handleGoogleSignIn = () => {
     if (disabled) return
     
-    const googleAuthUrl = `${env.apiBaseUrl}/auth/google`
+    // Usa window.location.origin para garantir a URL correta
+    // Evita problemas de duplicação de /api no path
+    const googleAuthUrl = `${window.location.origin}/api/auth/google`
     
     // Debug logs para identificar problema de URLs
     console.log('[GoogleSignInButton] === DEBUG INFO ===')
     console.log('[GoogleSignInButton] Environment:', env.environment)
     console.log('[GoogleSignInButton] env.apiBaseUrl:', env.apiBaseUrl)
-    console.log('[GoogleSignInButton] Full Google Auth URL:', googleAuthUrl)
     console.log('[GoogleSignInButton] window.location.origin:', window.location.origin)
-    console.log('[GoogleSignInButton] User agent:', navigator.userAgent)
+    console.log('[GoogleSignInButton] Final Google Auth URL:', googleAuthUrl)
     console.log('[GoogleSignInButton] ==========================')
     
     // Redirect to backend Google OAuth endpoint

@@ -235,7 +235,7 @@ export default function TestAPI() {
               </p>
               <GoogleSignInButton text="Test Google OAuth" />
               <div className="text-xs text-gray-500">
-                <p><strong>Expected URL:</strong> {env.apiBaseUrl}/auth/google</p>
+                <p><strong>Expected URL:</strong> {window.location.origin}/api/auth/google</p>
                 <p><strong>Environment:</strong> {env.environment}</p>
               </div>
             </div>
