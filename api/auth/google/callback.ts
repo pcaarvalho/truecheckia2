@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     })
 
-    const tokenData: GoogleTokenResponse = await tokenResponse.json()
+    const tokenData = await tokenResponse.json() as GoogleTokenResponse
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', tokenData)
@@ -116,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     })
 
-    const userData: GoogleUserInfo = await userResponse.json()
+    const userData = await userResponse.json() as GoogleUserInfo
 
     if (!userResponse.ok) {
       console.error('User info fetch failed:', userData)

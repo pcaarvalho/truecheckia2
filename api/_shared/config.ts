@@ -1,5 +1,5 @@
 // Load environment variables for Vercel serverless functions
-if (typeof window === 'undefined') {
+if (typeof globalThis === 'object' && !globalThis.window) {
   try {
     require('dotenv').config()
   } catch (e) {

@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import { prisma, checkDatabaseHealth } from './_shared/database'
+import { checkDatabaseHealth } from './_shared/database'
 import { config } from './_shared/config'
 import { withCors, testCorsConfiguration } from './_middleware/cors'
 

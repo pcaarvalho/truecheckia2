@@ -39,10 +39,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Google OAuth redirect to:', callbackUrl)
     
     // Redirect to Google OAuth
-    res.redirect(302, authUrl)
+    return res.redirect(302, authUrl)
   } catch (error) {
     console.error('Google OAuth initiation error:', error)
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'OAuth initiation failed',
       code: 'OAUTH_INIT_FAILED'
     })
