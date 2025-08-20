@@ -90,11 +90,7 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/((?!api|_next|favicon\\.ico|.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|avif|json|xml|txt)).*)",
+      "source": "/((?!api).*)",
       "destination": "/index.html"
     }
   ],
