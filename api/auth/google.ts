@@ -1,6 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+  
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
@@ -30,8 +35,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const authUrl = `${baseUrl}?${params.toString()}`
     
-    // Log for debugging (remove in production)
-    console.log('Google OAuth redirect:', authUrl)
+    // Log for debugging
+    console.log('Google OAuth redirect to:', callbackUrl)
     
     // Redirect to Google OAuth
     res.redirect(302, authUrl)
