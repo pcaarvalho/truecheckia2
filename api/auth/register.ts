@@ -3,12 +3,11 @@ import { createVercelHandler } from '../_utils/vercel-adapter'
 import { createAuthRateLimitMiddleware } from '../_middleware/rate-limit'
 import { validateRequestMiddleware } from '../_middleware/validation'
 import { registerSchema } from '../_shared/types'
-// Dynamic import moved to handler
+import { AuthController } from '../_controllers/auth.controller'
 
-// Dynamic import to reduce cold start
-const registerHandler = async (req: any, res: any) => {
-  const authController = await import('../../apps/api/src/controllers/auth.controller')
-  return authController.default.register(req, res)
+// Optimized register handler
+const registerHandler = async (req: VercelRequest, res: VercelResponse) => {
+  return AuthController.register(req, res)
 }
 
 const handler = createVercelHandler(
