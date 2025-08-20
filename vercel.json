@@ -101,7 +101,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "CORS_ORIGINS": "https://www.truecheckia.com,https://truecheckia.com"
   },
   "regions": ["iad1"]
 }

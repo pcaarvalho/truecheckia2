@@ -180,20 +180,40 @@ export function createVercelHandler(
         }
       }
 
-      // Apply CORS headers using centralized middleware
+      // Apply CORS headers
       if (!res.headersSent) {
-        const { corsMiddleware } = await import('../_middleware/cors')
-        const cors = corsMiddleware()
-        cors(req, res)
+        try {
+          const { setCorsHeaders } = await import('../_middleware/cors')
+          setCorsHeaders(req, res)
+        } catch (corsError) {
+          console.warn('Failed to load CORS middleware, using fallback')
+          const origin = req.headers.origin
+          const allowedOrigins = ['https://www.truecheckia.com', 'https://truecheckia.com']
+          
+          if (origin && allowedOrigins.includes(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin)
+          } else {
+            res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0])
+          }
+          
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,x-api-key,x-client-version')
+          res.setHeader('Access-Control-Allow-Credentials', 'true')
+          res.setHeader('Access-Control-Max-Age', '86400')
+          
+          res.setHeader('X-Content-Type-Options', 'nosniff')
+          res.setHeader('X-Frame-Options', 'DENY')
+          res.setHeader('X-XSS-Protection', '1; mode=block')
+        }
         
-        // Additional security headers
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
       }
 
-      // Handle preflight requests (already handled by CORS middleware)
+      // Handle preflight requests
       if (req.method === 'OPTIONS') {
         clearTimeout(timeoutId)
-        return // CORS middleware already sent the response
+        res.status(204).end()
+        return
       }
 
       // Execute middleware chain with timeout protection

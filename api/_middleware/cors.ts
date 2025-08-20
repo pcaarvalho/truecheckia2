@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { config } from '../_shared/config'
 
 export interface CorsOptions {
   origins?: string[]
@@ -10,108 +9,112 @@ export interface CorsOptions {
 }
 
 /**
- * Enhanced CORS middleware for Vercel serverless functions
- * Provides consistent CORS handling across all API endpoints
+ * Get CORS configuration with fallbacks
  */
-export function corsMiddleware(options: CorsOptions = {}) {
+function getCorsConfig() {
+  // Try to load config with fallbacks
+  try {
+    const { config } = require('../_shared/config')
+    return {
+      origins: config?.cors?.origins || ['https://www.truecheckia.com', 'https://truecheckia.com'],
+      credentials: config?.cors?.credentials || true
+    }
+  } catch (error) {
+    console.warn('Could not load config, using fallback CORS settings')
+    return {
+      origins: ['https://www.truecheckia.com', 'https://truecheckia.com'],
+      credentials: true
+    }
+  }
+}
+
+/**
+ * Set CORS headers on response
+ */
+export function setCorsHeaders(
+  req: VercelRequest, 
+  res: VercelResponse, 
+  options: CorsOptions = {}
+) {
+  const corsConfig = getCorsConfig()
+  
   const {
-    origins = config.cors.origins,
+    origins = corsConfig.origins,
     methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders = [
       'Content-Type', 
       'Authorization', 
       'X-Requested-With',
       'x-api-key',
-      'x-client-version',
-      'Accept',
-      'Origin',
-      'Cache-Control'
+      'x-client-version'
     ],
-    credentials = config.cors.credentials,
-    maxAge = 86400 // 24 hours
+    credentials = corsConfig.credentials,
+    maxAge = 86400
   } = options
 
-  return function cors(req: VercelRequest, res: VercelResponse, next?: () => void) {
-    const origin = req.headers.origin
-    
-    // Determine allowed origin
-    let allowedOrigin = origins[0] || 'https://www.truecheckia.com'
-    
-    if (origin) {
-      if (origins.includes(origin)) {
-        allowedOrigin = origin
-      } else {
-        // Log rejected origins in development for debugging
-        if (config.isDev) {
-          console.warn(`🚫 CORS: Rejected origin: ${origin}`)
-          console.log('✅ Allowed origins:', origins)
-        }
-      }
-    }
+  const origin = req.headers.origin
+  let allowedOrigin = origins[0] || 'https://www.truecheckia.com'
+  
+  if (origin && origins.includes(origin)) {
+    allowedOrigin = origin
+  }
 
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
-    res.setHeader('Access-Control-Allow-Methods', methods.join(','))
-    res.setHeader('Access-Control-Allow-Headers', allowedHeaders.join(','))
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  res.setHeader('Access-Control-Allow-Methods', methods.join(','))
+  res.setHeader('Access-Control-Allow-Headers', allowedHeaders.join(','))
+  res.setHeader('Access-Control-Allow-Credentials', credentials.toString())
+  res.setHeader('Access-Control-Max-Age', maxAge.toString())
+  
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('X-XSS-Protection', '1; mode=block')
+}
+
+/**
+ * CORS middleware function
+ */
+export function corsMiddleware(options: CorsOptions = {}) {
+  return function(req: VercelRequest, res: VercelResponse, next?: () => void) {
+    setCorsHeaders(req, res, options)
     
-    if (credentials) {
-      res.setHeader('Access-Control-Allow-Credentials', 'true')
-    }
-    
-    res.setHeader('Access-Control-Max-Age', maxAge.toString())
-
-    // Add security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff')
-    res.setHeader('X-Frame-Options', 'DENY')
-    res.setHeader('X-XSS-Protection', '1; mode=block')
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
-
-    // Add performance headers
-    res.setHeader('X-Powered-By', 'TrueCheckIA')
-    res.setHeader('X-API-Version', '1.0.0')
-
-    // Handle preflight requests
     if (req.method === 'OPTIONS') {
       res.status(204).end()
       return
     }
-
-    // Continue to next middleware or handler
-    if (next) {
-      next()
-    }
+    
+    if (next) next()
   }
 }
 
 /**
- * Wrapper function to apply CORS to any Vercel function handler
+ * Simplified CORS wrapper for Vercel functions
  */
-export function withCors<T extends VercelRequest, U extends VercelResponse>(
-  handler: (req: T, res: U) => Promise<void> | void,
+export function withCors(
+  handler: (req: VercelRequest, res: VercelResponse) => Promise<void> | void,
   corsOptions?: CorsOptions
 ) {
-  const cors = corsMiddleware(corsOptions)
-  
-  return async (req: T, res: U) => {
-    // Apply CORS
-    cors(req, res)
-    
-    // If it's a preflight request, CORS middleware already handled it
-    if (req.method === 'OPTIONS') {
-      return
-    }
-    
-    // Execute the actual handler
+  return async (req: VercelRequest, res: VercelResponse) => {
     try {
+      // Set CORS headers
+      setCorsHeaders(req, res, corsOptions)
+      
+      // Handle preflight
+      if (req.method === 'OPTIONS') {
+        res.status(204).end()
+        return
+      }
+      
+      // Execute handler
       await handler(req, res)
     } catch (error) {
-      console.error('Handler error:', error)
+      console.error('CORS Handler error:', error)
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
           error: {
             code: 'INTERNAL_ERROR',
-            message: config.isDev ? (error as Error).message : 'Internal server error'
+            message: (error as Error).message
           }
         })
       }
@@ -120,21 +123,17 @@ export function withCors<T extends VercelRequest, U extends VercelResponse>(
 }
 
 /**
- * Health check function to test CORS configuration
+ * Test CORS configuration
  */
-export function testCorsConfiguration(req: VercelRequest): {
-  origin: string | undefined
-  allowed: boolean
-  allowedOrigins: string[]
-  userAgent: string | undefined
-} {
+export function testCorsConfiguration(req: VercelRequest) {
+  const corsConfig = getCorsConfig()
   const origin = req.headers.origin
-  const allowed = origin ? config.cors.origins.includes(origin) : true
+  const allowed = origin ? corsConfig.origins.includes(origin) : true
   
   return {
     origin,
     allowed,
-    allowedOrigins: config.cors.origins,
+    allowedOrigins: corsConfig.origins,
     userAgent: req.headers['user-agent']
   }
 }
