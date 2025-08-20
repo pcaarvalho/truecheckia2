@@ -1,20 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { prisma, checkDatabaseHealth } from './_shared/database'
 import { config } from './_shared/config'
+import { withCors, testCorsConfiguration } from './_middleware/cors'
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end()
-  }
+async function healthHandler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const startTime = Date.now()
+    
+    // Test CORS configuration
+    const corsTest = testCorsConfiguration(req)
     
     // Check database health
     const dbHealth = await checkDatabaseHealth()
@@ -33,13 +28,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       services: {
         database: dbHealth.status,
         config: hasRequiredEnv ? 'healthy' : 'missing_env',
-        api: 'healthy'
+        api: 'healthy',
+        cors: corsTest.allowed ? 'healthy' : 'origin_blocked'
       },
       environment: {
         node_env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL,
         region: process.env.VERCEL_REGION,
       },
+      cors: corsTest,
       version: '1.0.0'
     }
 
@@ -59,8 +56,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       services: {
         database: 'unknown',
         config: 'unknown',
-        api: 'unhealthy'
+        api: 'unhealthy',
+        cors: 'unknown'
       }
     })
   }
 }
+
+// Export with CORS middleware applied
+export default withCors(healthHandler, {
+  methods: ['GET', 'OPTIONS']
+})
